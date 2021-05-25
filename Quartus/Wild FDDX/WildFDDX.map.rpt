@@ -1,0 +1,327 @@
+Analysis & Synthesis report for WildFDDX
+Fri May 07 06:29:36 2021
+Quartus II 64-Bit Version 13.0.1 Build 232 06/12/2013 Service Pack 1 SJ Web Edition
+
+
+---------------------
+; Table of Contents ;
+---------------------
+  1. Legal Notice
+  2. Analysis & Synthesis Summary
+  3. Analysis & Synthesis Settings
+  4. Parallel Compilation
+  5. Analysis & Synthesis Source Files Read
+  6. Analysis & Synthesis Resource Usage Summary
+  7. Analysis & Synthesis Resource Utilization by Entity
+  8. User-Specified and Inferred Latches
+  9. Analysis & Synthesis Messages
+
+
+
+----------------
+; Legal Notice ;
+----------------
+Copyright (C) 1991-2013 Altera Corporation
+Your use of Altera Corporation's design tools, logic functions 
+and other software and tools, and its AMPP partner logic 
+functions, and any output files from any of the foregoing 
+(including device programming or simulation files), and any 
+associated documentation or information are expressly subject 
+to the terms and conditions of the Altera Program License 
+Subscription Agreement, Altera MegaCore Function License 
+Agreement, or other applicable license agreement, including, 
+without limitation, that your use is for the sole purpose of 
+programming logic devices manufactured by Altera and sold by 
+Altera or its authorized distributors.  Please refer to the 
+applicable agreement for further details.
+
+
+
++-------------------------------------------------------------------------------+
+; Analysis & Synthesis Summary                                                  ;
++-----------------------------+-------------------------------------------------+
+; Analysis & Synthesis Status ; Successful - Fri May 07 06:29:36 2021           ;
+; Quartus II 64-Bit Version   ; 13.0.1 Build 232 06/12/2013 SP 1 SJ Web Edition ;
+; Revision Name               ; WildFDDX                                        ;
+; Top-level Entity Name       ; WildFDDX                                        ;
+; Family                      ; MAX3000A                                        ;
+; Total macrocells            ; 58                                              ;
+; Total pins                  ; 30                                              ;
++-----------------------------+-------------------------------------------------+
+
+
++--------------------------------------------------------------------------------------------------------------+
+; Analysis & Synthesis Settings                                                                                ;
++----------------------------------------------------------------------------+-----------------+---------------+
+; Option                                                                     ; Setting         ; Default Value ;
++----------------------------------------------------------------------------+-----------------+---------------+
+; Device                                                                     ; EPM3064ATC44-10 ;               ;
+; Top-level entity name                                                      ; WildFDDX        ; WildFDDX      ;
+; Family name                                                                ; MAX3000A        ; Cyclone IV GX ;
+; Optimization Technique                                                     ; Area            ; Speed         ;
+; Type of Retiming Performed During Resynthesis                              ; Full            ;               ;
+; Resynthesis Optimization Effort                                            ; Normal          ;               ;
+; Physical Synthesis Level for Resynthesis                                   ; Normal          ;               ;
+; Use Generated Physical Constraints File                                    ; On              ;               ;
+; HDL message level                                                          ; Level3          ; Level2        ;
+; Use smart compilation                                                      ; Off             ; Off           ;
+; Enable parallel Assembler and TimeQuest Timing Analyzer during compilation ; On              ; On            ;
+; Enable compact report table                                                ; Off             ; Off           ;
+; Create Debugging Nodes for IP Cores                                        ; Off             ; Off           ;
+; Preserve fewer node names                                                  ; On              ; On            ;
+; Disable OpenCore Plus hardware evaluation                                  ; Off             ; Off           ;
+; Verilog Version                                                            ; Verilog_2001    ; Verilog_2001  ;
+; VHDL Version                                                               ; VHDL_1993       ; VHDL_1993     ;
+; State Machine Processing                                                   ; Auto            ; Auto          ;
+; Safe State Machine                                                         ; Off             ; Off           ;
+; Extract Verilog State Machines                                             ; On              ; On            ;
+; Extract VHDL State Machines                                                ; On              ; On            ;
+; Ignore Verilog initial constructs                                          ; Off             ; Off           ;
+; Iteration limit for constant Verilog loops                                 ; 5000            ; 5000          ;
+; Iteration limit for non-constant Verilog loops                             ; 250             ; 250           ;
+; Add Pass-Through Logic to Inferred RAMs                                    ; On              ; On            ;
+; Infer RAMs from Raw Logic                                                  ; On              ; On            ;
+; Parallel Synthesis                                                         ; On              ; On            ;
+; NOT Gate Push-Back                                                         ; On              ; On            ;
+; Power-Up Don't Care                                                        ; On              ; On            ;
+; Remove Duplicate Registers                                                 ; On              ; On            ;
+; Ignore CARRY Buffers                                                       ; Off             ; Off           ;
+; Ignore CASCADE Buffers                                                     ; Off             ; Off           ;
+; Ignore GLOBAL Buffers                                                      ; Off             ; Off           ;
+; Ignore ROW GLOBAL Buffers                                                  ; Off             ; Off           ;
+; Ignore LCELL Buffers                                                       ; Auto            ; Auto          ;
+; Ignore SOFT Buffers                                                        ; Off             ; Off           ;
+; Limit AHDL Integers to 32 Bits                                             ; Off             ; Off           ;
+; Allow XOR Gate Usage                                                       ; On              ; On            ;
+; Auto Logic Cell Insertion                                                  ; On              ; On            ;
+; Parallel Expander Chain Length                                             ; 4               ; 4             ;
+; Auto Parallel Expanders                                                    ; On              ; On            ;
+; Auto Open-Drain Pins                                                       ; On              ; On            ;
+; Auto Resource Sharing                                                      ; Off             ; Off           ;
+; Maximum Fan-in Per Macrocell                                               ; 100             ; 100           ;
+; Use LogicLock Constraints during Resource Balancing                        ; On              ; On            ;
+; Ignore translate_off and synthesis_off directives                          ; Off             ; Off           ;
+; Report Parameter Settings                                                  ; On              ; On            ;
+; Report Source Assignments                                                  ; On              ; On            ;
+; Report Connectivity Checks                                                 ; On              ; On            ;
+; Suppress Register Optimization Related Messages                            ; Off             ; Off           ;
+; Number of Removed Registers Reported in Synthesis Report                   ; 5000            ; 5000          ;
+; Number of Swept Nodes Reported in Synthesis Report                         ; 5000            ; 5000          ;
+; Number of Inverted Registers Reported in Synthesis Report                  ; 100             ; 100           ;
+; Block Design Naming                                                        ; Auto            ; Auto          ;
+; Synthesis Effort                                                           ; Auto            ; Auto          ;
+; Shift Register Replacement - Allow Asynchronous Clear Signal               ; On              ; On            ;
+; Pre-Mapping Resynthesis Optimization                                       ; Off             ; Off           ;
+; Analysis & Synthesis Message Level                                         ; Medium          ; Medium        ;
+; Disable Register Merging Across Hierarchies                                ; Auto            ; Auto          ;
+; Synthesis Seed                                                             ; 1               ; 1             ;
++----------------------------------------------------------------------------+-----------------+---------------+
+
+
++------------------------------------------+
+; Parallel Compilation                     ;
++----------------------------+-------------+
+; Processors                 ; Number      ;
++----------------------------+-------------+
+; Number detected on machine ; 16          ;
+; Maximum allowed            ; 16          ;
+;                            ;             ;
+; Average used               ; 1.00        ;
+; Maximum used               ; 1           ;
+;                            ;             ;
+; Usage by Processor         ; % Time Used ;
+;     Processor 1            ; 100.0%      ;
+;     Processors 2-16        ;   0.0%      ;
++----------------------------+-------------+
+
+
++--------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+; Analysis & Synthesis Source Files Read                                                                                                                             ;
++----------------------------------+-----------------+------------------------------------------+----------------------------------------------------------+---------+
+; File Name with User-Entered Path ; Used in Netlist ; File Type                                ; File Name with Absolute Path                             ; Library ;
++----------------------------------+-----------------+------------------------------------------+----------------------------------------------------------+---------+
+; WildFDDX.bdf                     ; yes             ; User Block Diagram/Schematic File        ; D:/Schematic/QuartusFuck/Wild FDDX/WildFDDX.bdf          ;         ;
+; 16bufer8b.bdf                    ; yes             ; User Block Diagram/Schematic File        ; D:/Schematic/QuartusFuck/Wild FDDX/16bufer8b.bdf         ;         ;
+; 8latchedge0b.bdf                 ; yes             ; User Block Diagram/Schematic File        ; D:/Schematic/QuartusFuck/Wild FDDX/8latchedge0b.bdf      ;         ;
+; 4latchedge0b.bdf                 ; yes             ; User Block Diagram/Schematic File        ; D:/Schematic/QuartusFuck/Wild FDDX/4latchedge0b.bdf      ;         ;
+; 8wirebus8.bdf                    ; yes             ; User Block Diagram/Schematic File        ; D:/Schematic/QuartusFuck/Wild FDDX/8wirebus8.bdf         ;         ;
+; 8latchhole0b.bdf                 ; yes             ; User Block Diagram/Schematic File        ; D:/Schematic/QuartusFuck/Wild FDDX/8latchhole0b.bdf      ;         ;
+; 2buferlatchedge1b.bdf            ; yes             ; User Block Diagram/Schematic File        ; D:/Schematic/QuartusFuck/Wild FDDX/2buferlatchedge1b.bdf ;         ;
+; 2buferlatchedge8b.bdf            ; yes             ; User Block Diagram/Schematic File        ; D:/Schematic/QuartusFuck/Wild FDDX/2buferlatchedge8b.bdf ;         ;
+; 2buferlatchedge4b.bdf            ; yes             ; User Block Diagram/Schematic File        ; D:/Schematic/QuartusFuck/Wild FDDX/2buferlatchedge4b.bdf ;         ;
+; 4demux.bdf                       ; yes             ; Auto-Found Block Diagram/Schematic File  ; D:/Schematic/QuartusFuck/Wild FDDX/4demux.bdf            ;         ;
+; 8bidir16_tri_b.bdf               ; yes             ; Auto-Found Block Diagram/Schematic File  ; D:/Schematic/QuartusFuck/Wild FDDX/8bidir16_tri_b.bdf    ;         ;
+; 32bufer8b.bdf                    ; yes             ; Auto-Found Block Diagram/Schematic File  ; D:/Schematic/QuartusFuck/Wild FDDX/32bufer8b.bdf         ;         ;
+; 3demux.bdf                       ; yes             ; Auto-Found Block Diagram/Schematic File  ; D:/Schematic/QuartusFuck/Wild FDDX/3demux.bdf            ;         ;
++----------------------------------+-----------------+------------------------------------------+----------------------------------------------------------+---------+
+
+
++--------------------------------------------------+
+; Analysis & Synthesis Resource Usage Summary      ;
++----------------------+---------------------------+
+; Resource             ; Usage                     ;
++----------------------+---------------------------+
+; Logic cells          ; 58                        ;
+; Total registers      ; 17                        ;
+; I/O pins             ; 30                        ;
+; Shareable expanders  ; 10                        ;
+; Maximum fan-out node ; 4latchedge0b:inst22|inst8 ;
+; Maximum fan-out      ; 42                        ;
+; Total fan-out        ; 382                       ;
+; Average fan-out      ; 3.90                      ;
++----------------------+---------------------------+
+
+
++---------------------------------------------------------------------------------------------------------------------------------+
+; Analysis & Synthesis Resource Utilization by Entity                                                                             ;
++---------------------------------+------------+------+------------------------------------------------------------+--------------+
+; Compilation Hierarchy Node      ; Macrocells ; Pins ; Full Hierarchy Name                                        ; Library Name ;
++---------------------------------+------------+------+------------------------------------------------------------+--------------+
+; |WildFDDX                       ; 58         ; 30   ; |WildFDDX                                                  ; work         ;
+;    |16bufer8b:inst14|           ; 8          ; 0    ; |WildFDDX|16bufer8b:inst14                                 ; work         ;
+;    |2buferlatchedge1b:inst25|   ; 1          ; 0    ; |WildFDDX|2buferlatchedge1b:inst25                         ; work         ;
+;    |2buferlatchedge1b:inst26|   ; 1          ; 0    ; |WildFDDX|2buferlatchedge1b:inst26                         ; work         ;
+;    |2buferlatchedge1b:inst27|   ; 1          ; 0    ; |WildFDDX|2buferlatchedge1b:inst27                         ; work         ;
+;    |2buferlatchedge8b:inst46|   ; 8          ; 0    ; |WildFDDX|2buferlatchedge8b:inst46                         ; work         ;
+;       |2buferlatchedge4b:inst4| ; 4          ; 0    ; |WildFDDX|2buferlatchedge8b:inst46|2buferlatchedge4b:inst4 ; work         ;
+;       |2buferlatchedge4b:inst|  ; 4          ; 0    ; |WildFDDX|2buferlatchedge8b:inst46|2buferlatchedge4b:inst  ; work         ;
+;    |32bufer8b:inst6|            ; 8          ; 0    ; |WildFDDX|32bufer8b:inst6                                  ; work         ;
+;    |3demux:inst|                ; 0          ; 0    ; |WildFDDX|3demux:inst                                      ; work         ;
+;    |4latchedge0b:inst22|        ; 3          ; 0    ; |WildFDDX|4latchedge0b:inst22                              ; work         ;
+;    |8latchedge0b:inst96|        ; 3          ; 0    ; |WildFDDX|8latchedge0b:inst96                              ; work         ;
+;    |8latchhole0b:inst10|        ; 5          ; 0    ; |WildFDDX|8latchhole0b:inst10                              ; work         ;
+;    |8latchhole0b:inst11|        ; 7          ; 0    ; |WildFDDX|8latchhole0b:inst11                              ; work         ;
+;    |8latchhole0b:inst12|        ; 8          ; 0    ; |WildFDDX|8latchhole0b:inst12                              ; work         ;
++---------------------------------+------------+------+------------------------------------------------------------+--------------+
+
+
++----------------------------------------------------------------------------------------------------+
+; User-Specified and Inferred Latches                                                                ;
++-----------------------------------------------------+---------------------+------------------------+
+; Latch Name                                          ; Latch Enable Signal ; Free of Timing Hazards ;
++-----------------------------------------------------+---------------------+------------------------+
+; 8latchhole0b:inst12|inst24                          ; inst62              ; yes                    ;
+; 8latchhole0b:inst12|inst23                          ; inst62              ; yes                    ;
+; 8latchhole0b:inst11|inst23                          ; inst64              ; yes                    ;
+; 8latchhole0b:inst12|inst22                          ; inst62              ; yes                    ;
+; 8latchhole0b:inst11|inst22                          ; inst64              ; yes                    ;
+; 8latchhole0b:inst12|inst21                          ; inst62              ; yes                    ;
+; 8latchhole0b:inst11|inst21                          ; inst64              ; yes                    ;
+; 8latchhole0b:inst10|inst21                          ; inst65              ; yes                    ;
+; 8latchhole0b:inst12|inst20                          ; inst62              ; yes                    ;
+; 8latchhole0b:inst11|inst20                          ; inst64              ; yes                    ;
+; 8latchhole0b:inst10|inst20                          ; inst65              ; yes                    ;
+; 8latchhole0b:inst12|inst19                          ; inst62              ; yes                    ;
+; 8latchhole0b:inst11|inst19                          ; inst64              ; yes                    ;
+; 8latchhole0b:inst10|inst19                          ; inst65              ; yes                    ;
+; 8latchhole0b:inst12|inst18                          ; inst62              ; yes                    ;
+; 8latchhole0b:inst11|inst18                          ; inst64              ; yes                    ;
+; 8latchhole0b:inst10|inst18                          ; inst65              ; yes                    ;
+; 8latchhole0b:inst12|inst17                          ; inst62              ; yes                    ;
+; 8latchhole0b:inst11|inst17                          ; inst64              ; yes                    ;
+; 8latchhole0b:inst10|inst17                          ; inst65              ; yes                    ;
+; Number of user-specified and inferred latches = 20  ;                     ;                        ;
++-----------------------------------------------------+---------------------+------------------------+
+Note: All latches listed above may not be present at the end of synthesis due to various synthesis optimizations.
+
+
++-------------------------------+
+; Analysis & Synthesis Messages ;
++-------------------------------+
+Info: *******************************************************************
+Info: Running Quartus II 64-Bit Analysis & Synthesis
+    Info: Version 13.0.1 Build 232 06/12/2013 Service Pack 1 SJ Web Edition
+    Info: Processing started: Fri May 07 06:29:36 2021
+Info: Command: quartus_map --read_settings_files=on --write_settings_files=off WildFDDX -c WildFDDX
+Warning (125092): Tcl Script File lpm_constant1.qip not found
+    Info (125063): set_global_assignment -name QIP_FILE lpm_constant1.qip
+Warning (125092): Tcl Script File lpm_constant2.qip not found
+    Info (125063): set_global_assignment -name QIP_FILE lpm_constant2.qip
+Warning (125092): Tcl Script File lpm_constant3.qip not found
+    Info (125063): set_global_assignment -name QIP_FILE lpm_constant3.qip
+Warning (125092): Tcl Script File lpm_compare0.qip not found
+    Info (125063): set_global_assignment -name QIP_FILE lpm_compare0.qip
+Info (20030): Parallel compilation is enabled and will use 16 of the 16 processors detected
+Info (12021): Found 1 design units, including 1 entities, in source file wildfddx.bdf
+    Info (12023): Found entity 1: WildFDDX
+Info (12021): Found 1 design units, including 1 entities, in source file compare_8b.bdf
+    Info (12023): Found entity 1: Compare_8b
+Info (12021): Found 1 design units, including 1 entities, in source file counter_4scb.bdf
+    Info (12023): Found entity 1: counter_4scb
+Info (12021): Found 1 design units, including 1 entities, in source file 16bufer8b.bdf
+    Info (12023): Found entity 1: 16bufer8b
+Info (12021): Found 1 design units, including 1 entities, in source file 8latchedgeb.bdf
+    Info (12023): Found entity 1: 8latchedgeb
+Info (12021): Found 1 design units, including 1 entities, in source file 8latchedge0b.bdf
+    Info (12023): Found entity 1: 8latchedge0b
+Info (12021): Found 1 design units, including 1 entities, in source file 4latchedge0.bdf
+    Info (12023): Found entity 1: 4latchedge0
+Info (12021): Found 1 design units, including 1 entities, in source file 4latchedge0b.bdf
+    Info (12023): Found entity 1: 4latchedge0b
+Info (12021): Found 1 design units, including 1 entities, in source file counter_8b.bdf
+    Info (12023): Found entity 1: Counter_8b
+Info (12021): Found 1 design units, including 1 entities, in source file strobe.bdf
+    Info (12023): Found entity 1: Strobe
+Info (12021): Found 1 design units, including 1 entities, in source file fdd_time_enc.bdf
+    Info (12023): Found entity 1: FDD_TIME_ENC
+Info (12021): Found 1 design units, including 1 entities, in source file 2latchedge0.bdf
+    Info (12023): Found entity 1: 2latchedge0
+Info (12021): Found 1 design units, including 1 entities, in source file 8wirebus8.bdf
+    Info (12023): Found entity 1: 8wirebus8
+Info (12021): Found 1 design units, including 1 entities, in source file 2bufer1b.bdf
+    Info (12023): Found entity 1: 2bufer1b
+Info (12021): Found 1 design units, including 1 entities, in source file 2buferlatch1b.bdf
+    Info (12023): Found entity 1: 2buferlatch1b
+Info (12021): Found 1 design units, including 1 entities, in source file 8latchhole0b.bdf
+    Info (12023): Found entity 1: 8latchhole0b
+Info (12021): Found 1 design units, including 1 entities, in source file 2buferlatchedge1b.bdf
+    Info (12023): Found entity 1: 2buferlatchedge1b
+Info (12021): Found 1 design units, including 1 entities, in source file 2buferedgeedge1b.bdf
+    Info (12023): Found entity 1: 2buferedgeedge1b
+Info (12021): Found 1 design units, including 1 entities, in source file 8bidir16_tri_b_1state.bdf
+    Info (12023): Found entity 1: 8bidir16_tri_b_1state
+Info (12021): Found 1 design units, including 1 entities, in source file 2buferlatchedge8b.bdf
+    Info (12023): Found entity 1: 2buferlatchedge8b
+Info (12021): Found 1 design units, including 1 entities, in source file 2buferlatchedge4b.bdf
+    Info (12023): Found entity 1: 2buferlatchedge4b
+Info (12021): Found 1 design units, including 1 entities, in source file 8bidir16_tri_b_7state.bdf
+    Info (12023): Found entity 1: 8bidir16_tri_b_7state
+Info (12127): Elaborating entity "WildFDDX" for the top level hierarchy
+Warning (275008): Primitive "NOT" of instance "inst19" not used
+Warning (275008): Primitive "NAND3" of instance "inst28" not used
+Warning (275008): Primitive "NOT" of instance "inst76" not used
+Warning (275008): Primitive "NOT" of instance "inst77" not used
+Info (12128): Elaborating entity "2buferlatchedge1b" for hierarchy "2buferlatchedge1b:inst27"
+Warning (12125): Using design file 4demux.bdf, which is not specified as a design file for the current project, but contains definitions for 1 design units and 1 entities in project
+    Info (12023): Found entity 1: 4demux
+Info (12128): Elaborating entity "4demux" for hierarchy "4demux:inst20"
+Info (12128): Elaborating entity "4latchedge0b" for hierarchy "4latchedge0b:inst22"
+Warning (12125): Using design file 8bidir16_tri_b.bdf, which is not specified as a design file for the current project, but contains definitions for 1 design units and 1 entities in project
+    Info (12023): Found entity 1: 8bidir16_tri_b
+Info (12128): Elaborating entity "8bidir16_tri_b" for hierarchy "8bidir16_tri_b:inst18"
+Info (12128): Elaborating entity "16bufer8b" for hierarchy "16bufer8b:inst14"
+Info (12128): Elaborating entity "2buferlatchedge8b" for hierarchy "2buferlatchedge8b:inst46"
+Info (12128): Elaborating entity "2buferlatchedge4b" for hierarchy "2buferlatchedge8b:inst46|2buferlatchedge4b:inst"
+Warning (12125): Using design file 32bufer8b.bdf, which is not specified as a design file for the current project, but contains definitions for 1 design units and 1 entities in project
+    Info (12023): Found entity 1: 32bufer8b
+Info (12128): Elaborating entity "32bufer8b" for hierarchy "32bufer8b:inst6"
+Warning (12125): Using design file 3demux.bdf, which is not specified as a design file for the current project, but contains definitions for 1 design units and 1 entities in project
+    Info (12023): Found entity 1: 3demux
+Info (12128): Elaborating entity "3demux" for hierarchy "3demux:inst4"
+Info (12128): Elaborating entity "8latchhole0b" for hierarchy "8latchhole0b:inst12"
+Info (12128): Elaborating entity "8wirebus8" for hierarchy "8wirebus8:inst55"
+Info (12128): Elaborating entity "8latchedge0b" for hierarchy "8latchedge0b:inst96"
+Info (13000): Registers with preset signals will power-up high
+Info (21057): Implemented 98 device resources after synthesis - the final resource count might be different
+    Info (21058): Implemented 10 input pins
+    Info (21059): Implemented 4 output pins
+    Info (21060): Implemented 16 bidirectional pins
+    Info (21063): Implemented 58 macrocells
+    Info (21073): Implemented 10 shareable expanders
+Info: Quartus II 64-Bit Analysis & Synthesis was successful. 0 errors, 12 warnings
+    Info: Peak virtual memory: 417 megabytes
+    Info: Processing ended: Fri May 07 06:29:36 2021
+    Info: Elapsed time: 00:00:00
+    Info: Total CPU time (on all processors): 00:00:00
+
+

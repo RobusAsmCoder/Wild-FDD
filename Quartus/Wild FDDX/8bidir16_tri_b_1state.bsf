@@ -1,0 +1,71 @@
+/*
+WARNING: Do NOT edit the input and output ports in this file in a text
+editor if you plan to continue editing the block that represents it in
+the Block Editor! File corruption is VERY likely to occur.
+*/
+/*
+Copyright (C) 1991-2009 Altera Corporation
+Your use of Altera Corporation's design tools, logic functions 
+and other software and tools, and its AMPP partner logic 
+functions, and any output files from any of the foregoing 
+(including device programming or simulation files), and any 
+associated documentation or information are expressly subject 
+to the terms and conditions of the Altera Program License 
+Subscription Agreement, Altera MegaCore Function License 
+Agreement, or other applicable license agreement, including, 
+without limitation, that your use is for the sole purpose of 
+programming logic devices manufactured by Altera and sold by 
+Altera or its authorized distributors.  Please refer to the 
+applicable agreement for further details.
+*/
+(header "symbol" (version "1.1"))
+(symbol
+	(rect 64 80 200 176)
+	(text "8bidir16_tri_b_1state" (rect 8 0 127 14)(font "Arial" (font_size 8)))
+	(text "inst" (rect 24 80 41 92)(font "Arial" ))
+	(port
+		(pt 136 64)
+		(input)
+		(text "OEII0" (rect 24 -16 52 -2)(font "Arial" (font_size 8)))
+		(text "OEII0" (rect 84 56 112 70)(font "Arial" (font_size 8)))
+		(line (pt 120 64)(pt 136 64)(line_width 1))
+	)
+	(port
+		(pt 136 32)
+		(input)
+		(text "DIR" (rect 24 -16 42 -2)(font "Arial" (font_size 8)))
+		(text "DIR" (rect 94 24 112 38)(font "Arial" (font_size 8)))
+		(line (pt 120 32)(pt 136 32)(line_width 1))
+	)
+	(port
+		(pt 0 64)
+		(input)
+		(text "II0" (rect 0 -16 11 -2)(font "Arial" (font_size 8)))
+		(text "II0" (rect 21 59 32 73)(font "Arial" (font_size 8)))
+		(line (pt 0 64)(pt 16 64)(line_width 1))
+	)
+	(port
+		(pt 0 48)
+		(input)
+		(text "I[7..0]" (rect 0 -16 30 -2)(font "Arial" (font_size 8)))
+		(text "I[7..0]" (rect 21 43 51 57)(font "Arial" (font_size 8)))
+		(line (pt 0 48)(pt 16 48)(color 0 128 255)(line_width 3))
+	)
+	(port
+		(pt 0 32)
+		(output)
+		(text "O[7..0]" (rect 0 -16 37 -2)(font "Arial" (font_size 8)))
+		(text "O[7..0]" (rect 24 24 61 38)(font "Arial" (font_size 8)))
+		(line (pt 16 32)(pt 0 32)(color 128 0 255)(line_width 3))
+	)
+	(port
+		(pt 136 48)
+		(bidir)
+		(text "B[7..0]" (rect 40 -16 76 -2)(font "Arial" (font_size 8)))
+		(text "B[7..0]" (rect 80 40 116 54)(font "Arial" (font_size 8)))
+		(line (pt 136 48)(pt 120 48)(color 0 128 0)(line_width 3))
+	)
+	(drawing
+		(rectangle (rect 16 16 120 80)(line_width 1))
+	)
+)

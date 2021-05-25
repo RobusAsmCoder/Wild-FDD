@@ -1,0 +1,911 @@
+TimeQuest Timing Analyzer report for WildFDDX
+Fri May 07 06:29:39 2021
+Quartus II 64-Bit Version 13.0.1 Build 232 06/12/2013 Service Pack 1 SJ Web Edition
+
+
+---------------------
+; Table of Contents ;
+---------------------
+  1. Legal Notice
+  2. TimeQuest Timing Analyzer Summary
+  3. Parallel Compilation
+  4. Clocks
+  5. Fmax Summary
+  6. Setup Summary
+  7. Hold Summary
+  8. Recovery Summary
+  9. Removal Summary
+ 10. Minimum Pulse Width Summary
+ 11. Recovery: 'VGCS'
+ 12. Removal: 'VGCS'
+ 13. Minimum Pulse Width: 'VGCS'
+ 14. Minimum Pulse Width: 'CPALE'
+ 15. Setup Times
+ 16. Hold Times
+ 17. Clock to Output Times
+ 18. Minimum Clock to Output Times
+ 19. Propagation Delay
+ 20. Minimum Propagation Delay
+ 21. Output Enable Times
+ 22. Minimum Output Enable Times
+ 23. Output Disable Times
+ 24. Minimum Output Disable Times
+ 25. Recovery Transfers
+ 26. Removal Transfers
+ 27. Report TCCS
+ 28. Report RSKM
+ 29. Unconstrained Paths
+ 30. TimeQuest Timing Analyzer Messages
+
+
+
+----------------
+; Legal Notice ;
+----------------
+Copyright (C) 1991-2013 Altera Corporation
+Your use of Altera Corporation's design tools, logic functions 
+and other software and tools, and its AMPP partner logic 
+functions, and any output files from any of the foregoing 
+(including device programming or simulation files), and any 
+associated documentation or information are expressly subject 
+to the terms and conditions of the Altera Program License 
+Subscription Agreement, Altera MegaCore Function License 
+Agreement, or other applicable license agreement, including, 
+without limitation, that your use is for the sole purpose of 
+programming logic devices manufactured by Altera and sold by 
+Altera or its authorized distributors.  Please refer to the 
+applicable agreement for further details.
+
+
+
++----------------------------------------------------------------------------------------+
+; TimeQuest Timing Analyzer Summary                                                      ;
++--------------------+-------------------------------------------------------------------+
+; Quartus II Version ; Version 13.0.1 Build 232 06/12/2013 Service Pack 1 SJ Web Edition ;
+; Revision Name      ; WildFDDX                                                          ;
+; Device Family      ; MAX3000A                                                          ;
+; Device Name        ; EPM3064ATC44-10                                                   ;
+; Timing Models      ; Final                                                             ;
+; Delay Model        ; Slow Model                                                        ;
+; Rise/Fall Delays   ; Unavailable                                                       ;
++--------------------+-------------------------------------------------------------------+
+
+
++------------------------------------------+
+; Parallel Compilation                     ;
++----------------------------+-------------+
+; Processors                 ; Number      ;
++----------------------------+-------------+
+; Number detected on machine ; 16          ;
+; Maximum allowed            ; 16          ;
+;                            ;             ;
+; Average used               ; 1.00        ;
+; Maximum used               ; 1           ;
+;                            ;             ;
+; Usage by Processor         ; % Time Used ;
+;     Processor 1            ; 100.0%      ;
+;     Processors 2-16        ;   0.0%      ;
++----------------------------+-------------+
+
+
++-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+; Clocks                                                                                                                                                                            ;
++------------+------+--------+------------+-------+-------+------------+-----------+-------------+-------+--------+-----------+------------+----------+--------+--------+-----------+
+; Clock Name ; Type ; Period ; Frequency  ; Rise  ; Fall  ; Duty Cycle ; Divide by ; Multiply by ; Phase ; Offset ; Edge List ; Edge Shift ; Inverted ; Master ; Source ; Targets   ;
++------------+------+--------+------------+-------+-------+------------+-----------+-------------+-------+--------+-----------+------------+----------+--------+--------+-----------+
+; CPALE      ; Base ; 1.000  ; 1000.0 MHz ; 0.000 ; 0.500 ;            ;           ;             ;       ;        ;           ;            ;          ;        ;        ; { CPALE } ;
+; VGCS       ; Base ; 1.000  ; 1000.0 MHz ; 0.000 ; 0.500 ;            ;           ;             ;       ;        ;           ;            ;          ;        ;        ; { VGCS }  ;
++------------+------+--------+------------+-------+-------+------------+-----------+-------------+-------+--------+-----------+------------+----------+--------+--------+-----------+
+
+
+----------------
+; Fmax Summary ;
+----------------
+No paths to report.
+
+
+-----------------
+; Setup Summary ;
+-----------------
+No paths to report.
+
+
+----------------
+; Hold Summary ;
+----------------
+No paths to report.
+
+
++--------------------------------+
+; Recovery Summary               ;
++-------+--------+---------------+
+; Clock ; Slack  ; End Point TNS ;
++-------+--------+---------------+
+; VGCS  ; -6.600 ; -71.100       ;
++-------+--------+---------------+
+
+
++--------------------------------+
+; Removal Summary                ;
++-------+--------+---------------+
+; Clock ; Slack  ; End Point TNS ;
++-------+--------+---------------+
+; VGCS  ; -4.100 ; -4.100        ;
++-------+--------+---------------+
+
+
++---------------------------------+
+; Minimum Pulse Width Summary     ;
++-------+---------+---------------+
+; Clock ; Slack   ; End Point TNS ;
++-------+---------+---------------+
+; VGCS  ; -10.500 ; -112.000      ;
+; CPALE ; -3.500  ; -21.000       ;
++-------+---------+---------------+
+
+
++--------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+; Recovery: 'VGCS'                                                                                                                                                   ;
++--------+---------------------------+---------------------------------------------------------+--------------+-------------+--------------+------------+------------+
+; Slack  ; From Node                 ; To Node                                                 ; Launch Clock ; Latch Clock ; Relationship ; Clock Skew ; Data Delay ;
++--------+---------------------------+---------------------------------------------------------+--------------+-------------+--------------+------------+------------+
+; -6.600 ; 4latchedge0b:inst22|inst7 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst|inst20  ; CPALE        ; VGCS        ; 0.500        ; 4.100      ; 8.300      ;
+; -6.600 ; 4latchedge0b:inst22|inst6 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst|inst20  ; CPALE        ; VGCS        ; 0.500        ; 4.100      ; 8.300      ;
+; -6.600 ; 4latchedge0b:inst22|inst8 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst|inst20  ; CPALE        ; VGCS        ; 0.500        ; 4.100      ; 8.300      ;
+; -6.600 ; 4latchedge0b:inst22|inst7 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst4|inst24 ; CPALE        ; VGCS        ; 0.500        ; 4.100      ; 8.300      ;
+; -6.600 ; 4latchedge0b:inst22|inst6 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst4|inst24 ; CPALE        ; VGCS        ; 0.500        ; 4.100      ; 8.300      ;
+; -6.600 ; 4latchedge0b:inst22|inst8 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst4|inst24 ; CPALE        ; VGCS        ; 0.500        ; 4.100      ; 8.300      ;
+; -6.600 ; 4latchedge0b:inst22|inst7 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst4|inst20 ; CPALE        ; VGCS        ; 0.500        ; 4.100      ; 8.300      ;
+; -6.600 ; 4latchedge0b:inst22|inst6 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst4|inst20 ; CPALE        ; VGCS        ; 0.500        ; 4.100      ; 8.300      ;
+; -6.600 ; 4latchedge0b:inst22|inst8 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst4|inst20 ; CPALE        ; VGCS        ; 0.500        ; 4.100      ; 8.300      ;
+; -6.600 ; 4latchedge0b:inst22|inst7 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst|inst12  ; CPALE        ; VGCS        ; 0.500        ; 4.100      ; 8.300      ;
+; -6.600 ; 4latchedge0b:inst22|inst6 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst|inst12  ; CPALE        ; VGCS        ; 0.500        ; 4.100      ; 8.300      ;
+; -6.600 ; 4latchedge0b:inst22|inst8 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst|inst12  ; CPALE        ; VGCS        ; 0.500        ; 4.100      ; 8.300      ;
+; -6.600 ; 4latchedge0b:inst22|inst7 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst|inst16  ; CPALE        ; VGCS        ; 0.500        ; 4.100      ; 8.300      ;
+; -6.600 ; 4latchedge0b:inst22|inst6 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst|inst16  ; CPALE        ; VGCS        ; 0.500        ; 4.100      ; 8.300      ;
+; -6.600 ; 4latchedge0b:inst22|inst8 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst|inst16  ; CPALE        ; VGCS        ; 0.500        ; 4.100      ; 8.300      ;
+; -6.600 ; 4latchedge0b:inst22|inst7 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst4|inst16 ; CPALE        ; VGCS        ; 0.500        ; 4.100      ; 8.300      ;
+; -6.600 ; 4latchedge0b:inst22|inst6 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst4|inst16 ; CPALE        ; VGCS        ; 0.500        ; 4.100      ; 8.300      ;
+; -6.600 ; 4latchedge0b:inst22|inst8 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst4|inst16 ; CPALE        ; VGCS        ; 0.500        ; 4.100      ; 8.300      ;
+; -6.600 ; 4latchedge0b:inst22|inst7 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst4|inst12 ; CPALE        ; VGCS        ; 0.500        ; 4.100      ; 8.300      ;
+; -6.600 ; 4latchedge0b:inst22|inst6 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst4|inst12 ; CPALE        ; VGCS        ; 0.500        ; 4.100      ; 8.300      ;
+; -6.600 ; 4latchedge0b:inst22|inst8 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst4|inst12 ; CPALE        ; VGCS        ; 0.500        ; 4.100      ; 8.300      ;
+; -6.600 ; 4latchedge0b:inst22|inst7 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst|inst24  ; CPALE        ; VGCS        ; 0.500        ; 4.100      ; 8.300      ;
+; -6.600 ; 4latchedge0b:inst22|inst6 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst|inst24  ; CPALE        ; VGCS        ; 0.500        ; 4.100      ; 8.300      ;
+; -6.600 ; 4latchedge0b:inst22|inst8 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst|inst24  ; CPALE        ; VGCS        ; 0.500        ; 4.100      ; 8.300      ;
+; -6.100 ; 4latchedge0b:inst22|inst6 ; 2buferlatchedge1b:inst27|inst12                         ; CPALE        ; VGCS        ; 1.000        ; 4.100      ; 8.300      ;
+; -6.100 ; 4latchedge0b:inst22|inst7 ; 2buferlatchedge1b:inst27|inst12                         ; CPALE        ; VGCS        ; 1.000        ; 4.100      ; 8.300      ;
+; -6.100 ; 4latchedge0b:inst22|inst8 ; 2buferlatchedge1b:inst27|inst12                         ; CPALE        ; VGCS        ; 1.000        ; 4.100      ; 8.300      ;
+; -6.100 ; 4latchedge0b:inst22|inst8 ; 2buferlatchedge1b:inst26|inst12                         ; CPALE        ; VGCS        ; 1.000        ; 4.100      ; 8.300      ;
+; -6.100 ; 4latchedge0b:inst22|inst7 ; 2buferlatchedge1b:inst26|inst12                         ; CPALE        ; VGCS        ; 1.000        ; 4.100      ; 8.300      ;
+; -6.100 ; 4latchedge0b:inst22|inst8 ; 2buferlatchedge1b:inst25|inst12                         ; CPALE        ; VGCS        ; 1.000        ; 4.100      ; 8.300      ;
+; -6.100 ; 4latchedge0b:inst22|inst7 ; 2buferlatchedge1b:inst25|inst12                         ; CPALE        ; VGCS        ; 1.000        ; 4.100      ; 8.300      ;
++--------+---------------------------+---------------------------------------------------------+--------------+-------------+--------------+------------+------------+
+
+
++--------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+; Removal: 'VGCS'                                                                                                                                                    ;
++--------+---------------------------+---------------------------------------------------------+--------------+-------------+--------------+------------+------------+
+; Slack  ; From Node                 ; To Node                                                 ; Launch Clock ; Latch Clock ; Relationship ; Clock Skew ; Data Delay ;
++--------+---------------------------+---------------------------------------------------------+--------------+-------------+--------------+------------+------------+
+; -4.100 ; 4latchedge0b:inst22|inst6 ; 2buferlatchedge1b:inst27|inst12                         ; CPALE        ; VGCS        ; 0.000        ; 11.100     ; 8.300      ;
+; -4.100 ; 4latchedge0b:inst22|inst7 ; 2buferlatchedge1b:inst27|inst12                         ; CPALE        ; VGCS        ; 0.000        ; 11.100     ; 8.300      ;
+; -4.100 ; 4latchedge0b:inst22|inst8 ; 2buferlatchedge1b:inst27|inst12                         ; CPALE        ; VGCS        ; 0.000        ; 11.100     ; 8.300      ;
+; 0.500  ; 4latchedge0b:inst22|inst7 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst|inst20  ; CPALE        ; VGCS        ; -0.500       ; 4.100      ; 5.400      ;
+; 0.500  ; 4latchedge0b:inst22|inst6 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst|inst20  ; CPALE        ; VGCS        ; -0.500       ; 4.100      ; 5.400      ;
+; 0.500  ; 4latchedge0b:inst22|inst8 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst|inst20  ; CPALE        ; VGCS        ; -0.500       ; 4.100      ; 5.400      ;
+; 0.500  ; 4latchedge0b:inst22|inst7 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst4|inst24 ; CPALE        ; VGCS        ; -0.500       ; 4.100      ; 5.400      ;
+; 0.500  ; 4latchedge0b:inst22|inst6 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst4|inst24 ; CPALE        ; VGCS        ; -0.500       ; 4.100      ; 5.400      ;
+; 0.500  ; 4latchedge0b:inst22|inst8 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst4|inst24 ; CPALE        ; VGCS        ; -0.500       ; 4.100      ; 5.400      ;
+; 0.500  ; 4latchedge0b:inst22|inst7 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst4|inst20 ; CPALE        ; VGCS        ; -0.500       ; 4.100      ; 5.400      ;
+; 0.500  ; 4latchedge0b:inst22|inst6 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst4|inst20 ; CPALE        ; VGCS        ; -0.500       ; 4.100      ; 5.400      ;
+; 0.500  ; 4latchedge0b:inst22|inst8 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst4|inst20 ; CPALE        ; VGCS        ; -0.500       ; 4.100      ; 5.400      ;
+; 0.500  ; 4latchedge0b:inst22|inst7 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst|inst12  ; CPALE        ; VGCS        ; -0.500       ; 4.100      ; 5.400      ;
+; 0.500  ; 4latchedge0b:inst22|inst6 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst|inst12  ; CPALE        ; VGCS        ; -0.500       ; 4.100      ; 5.400      ;
+; 0.500  ; 4latchedge0b:inst22|inst8 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst|inst12  ; CPALE        ; VGCS        ; -0.500       ; 4.100      ; 5.400      ;
+; 0.500  ; 4latchedge0b:inst22|inst7 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst|inst16  ; CPALE        ; VGCS        ; -0.500       ; 4.100      ; 5.400      ;
+; 0.500  ; 4latchedge0b:inst22|inst6 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst|inst16  ; CPALE        ; VGCS        ; -0.500       ; 4.100      ; 5.400      ;
+; 0.500  ; 4latchedge0b:inst22|inst8 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst|inst16  ; CPALE        ; VGCS        ; -0.500       ; 4.100      ; 5.400      ;
+; 0.500  ; 4latchedge0b:inst22|inst7 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst4|inst16 ; CPALE        ; VGCS        ; -0.500       ; 4.100      ; 5.400      ;
+; 0.500  ; 4latchedge0b:inst22|inst6 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst4|inst16 ; CPALE        ; VGCS        ; -0.500       ; 4.100      ; 5.400      ;
+; 0.500  ; 4latchedge0b:inst22|inst8 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst4|inst16 ; CPALE        ; VGCS        ; -0.500       ; 4.100      ; 5.400      ;
+; 0.500  ; 4latchedge0b:inst22|inst7 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst4|inst12 ; CPALE        ; VGCS        ; -0.500       ; 4.100      ; 5.400      ;
+; 0.500  ; 4latchedge0b:inst22|inst6 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst4|inst12 ; CPALE        ; VGCS        ; -0.500       ; 4.100      ; 5.400      ;
+; 0.500  ; 4latchedge0b:inst22|inst8 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst4|inst12 ; CPALE        ; VGCS        ; -0.500       ; 4.100      ; 5.400      ;
+; 0.500  ; 4latchedge0b:inst22|inst7 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst|inst24  ; CPALE        ; VGCS        ; -0.500       ; 4.100      ; 5.400      ;
+; 0.500  ; 4latchedge0b:inst22|inst6 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst|inst24  ; CPALE        ; VGCS        ; -0.500       ; 4.100      ; 5.400      ;
+; 0.500  ; 4latchedge0b:inst22|inst8 ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst|inst24  ; CPALE        ; VGCS        ; -0.500       ; 4.100      ; 5.400      ;
+; 2.900  ; 4latchedge0b:inst22|inst8 ; 2buferlatchedge1b:inst26|inst12                         ; CPALE        ; VGCS        ; 0.000        ; 4.100      ; 8.300      ;
+; 2.900  ; 4latchedge0b:inst22|inst7 ; 2buferlatchedge1b:inst26|inst12                         ; CPALE        ; VGCS        ; 0.000        ; 4.100      ; 8.300      ;
+; 2.900  ; 4latchedge0b:inst22|inst8 ; 2buferlatchedge1b:inst25|inst12                         ; CPALE        ; VGCS        ; 0.000        ; 4.100      ; 8.300      ;
+; 2.900  ; 4latchedge0b:inst22|inst7 ; 2buferlatchedge1b:inst25|inst12                         ; CPALE        ; VGCS        ; 0.000        ; 4.100      ; 8.300      ;
++--------+---------------------------+---------------------------------------------------------+--------------+-------------+--------------+------------+------------+
+
+
++-------------------------------------------------------------------------------------------------------------------------------------------+
+; Minimum Pulse Width: 'VGCS'                                                                                                               ;
++---------+--------------+----------------+------------------+-------+------------+---------------------------------------------------------+
+; Slack   ; Actual Width ; Required Width ; Type             ; Clock ; Clock Edge ; Target                                                  ;
++---------+--------------+----------------+------------------+-------+------------+---------------------------------------------------------+
+; -10.500 ; -6.500       ; 4.000          ; High Pulse Width ; VGCS  ; Fall       ; 2buferlatchedge1b:inst27|inst12                         ;
+; -10.500 ; -6.500       ; 4.000          ; Low Pulse Width  ; VGCS  ; Fall       ; 2buferlatchedge1b:inst27|inst12                         ;
+; -3.500  ; 0.500        ; 4.000          ; High Pulse Width ; VGCS  ; Fall       ; 2buferlatchedge1b:inst25|inst12                         ;
+; -3.500  ; 0.500        ; 4.000          ; Low Pulse Width  ; VGCS  ; Fall       ; 2buferlatchedge1b:inst25|inst12                         ;
+; -3.500  ; 0.500        ; 4.000          ; High Pulse Width ; VGCS  ; Fall       ; 2buferlatchedge1b:inst26|inst12                         ;
+; -3.500  ; 0.500        ; 4.000          ; Low Pulse Width  ; VGCS  ; Fall       ; 2buferlatchedge1b:inst26|inst12                         ;
+; -3.500  ; 0.500        ; 4.000          ; High Pulse Width ; VGCS  ; Rise       ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst4|inst12 ;
+; -3.500  ; 0.500        ; 4.000          ; Low Pulse Width  ; VGCS  ; Rise       ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst4|inst12 ;
+; -3.500  ; 0.500        ; 4.000          ; High Pulse Width ; VGCS  ; Rise       ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst4|inst16 ;
+; -3.500  ; 0.500        ; 4.000          ; Low Pulse Width  ; VGCS  ; Rise       ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst4|inst16 ;
+; -3.500  ; 0.500        ; 4.000          ; High Pulse Width ; VGCS  ; Rise       ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst4|inst20 ;
+; -3.500  ; 0.500        ; 4.000          ; Low Pulse Width  ; VGCS  ; Rise       ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst4|inst20 ;
+; -3.500  ; 0.500        ; 4.000          ; High Pulse Width ; VGCS  ; Rise       ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst4|inst24 ;
+; -3.500  ; 0.500        ; 4.000          ; Low Pulse Width  ; VGCS  ; Rise       ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst4|inst24 ;
+; -3.500  ; 0.500        ; 4.000          ; High Pulse Width ; VGCS  ; Rise       ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst|inst12  ;
+; -3.500  ; 0.500        ; 4.000          ; Low Pulse Width  ; VGCS  ; Rise       ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst|inst12  ;
+; -3.500  ; 0.500        ; 4.000          ; High Pulse Width ; VGCS  ; Rise       ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst|inst16  ;
+; -3.500  ; 0.500        ; 4.000          ; Low Pulse Width  ; VGCS  ; Rise       ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst|inst16  ;
+; -3.500  ; 0.500        ; 4.000          ; High Pulse Width ; VGCS  ; Rise       ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst|inst20  ;
+; -3.500  ; 0.500        ; 4.000          ; Low Pulse Width  ; VGCS  ; Rise       ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst|inst20  ;
+; -3.500  ; 0.500        ; 4.000          ; High Pulse Width ; VGCS  ; Rise       ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst|inst24  ;
+; -3.500  ; 0.500        ; 4.000          ; Low Pulse Width  ; VGCS  ; Rise       ; 2buferlatchedge8b:inst46|2buferlatchedge4b:inst|inst24  ;
+; -3.500  ; 0.500        ; 4.000          ; High Pulse Width ; VGCS  ; Fall       ; 8latchedge0b:inst96|inst6                               ;
+; -3.500  ; 0.500        ; 4.000          ; Low Pulse Width  ; VGCS  ; Fall       ; 8latchedge0b:inst96|inst6                               ;
+; -3.500  ; 0.500        ; 4.000          ; High Pulse Width ; VGCS  ; Fall       ; 8latchedge0b:inst96|inst7                               ;
+; -3.500  ; 0.500        ; 4.000          ; Low Pulse Width  ; VGCS  ; Fall       ; 8latchedge0b:inst96|inst7                               ;
+; -3.500  ; 0.500        ; 4.000          ; High Pulse Width ; VGCS  ; Fall       ; 8latchedge0b:inst96|inst8                               ;
+; -3.500  ; 0.500        ; 4.000          ; Low Pulse Width  ; VGCS  ; Fall       ; 8latchedge0b:inst96|inst8                               ;
+; 0.500   ; 0.500        ; 0.000          ; High Pulse Width ; VGCS  ; Rise       ; VGCS|dataout                                            ;
+; 0.500   ; 0.500        ; 0.000          ; Low Pulse Width  ; VGCS  ; Rise       ; VGCS|dataout                                            ;
+; 0.500   ; 0.500        ; 0.000          ; High Pulse Width ; VGCS  ; Rise       ; inst100~3|datain[2]                                     ;
+; 0.500   ; 0.500        ; 0.000          ; Low Pulse Width  ; VGCS  ; Rise       ; inst100~3|datain[2]                                     ;
+; 0.500   ; 0.500        ; 0.000          ; High Pulse Width ; VGCS  ; Fall       ; inst100~3|dataout                                       ;
+; 0.500   ; 0.500        ; 0.000          ; Low Pulse Width  ; VGCS  ; Fall       ; inst100~3|dataout                                       ;
+; 0.500   ; 0.500        ; 0.000          ; High Pulse Width ; VGCS  ; Rise       ; inst100~5|datain[2]                                     ;
+; 0.500   ; 0.500        ; 0.000          ; Low Pulse Width  ; VGCS  ; Rise       ; inst100~5|datain[2]                                     ;
+; 0.500   ; 0.500        ; 0.000          ; High Pulse Width ; VGCS  ; Fall       ; inst100~5|dataout                                       ;
+; 0.500   ; 0.500        ; 0.000          ; Low Pulse Width  ; VGCS  ; Fall       ; inst100~5|dataout                                       ;
+; 0.500   ; 0.500        ; 0.000          ; High Pulse Width ; VGCS  ; Fall       ; inst25|inst12|[0]                                       ;
+; 0.500   ; 0.500        ; 0.000          ; Low Pulse Width  ; VGCS  ; Fall       ; inst25|inst12|[0]                                       ;
+; 0.500   ; 0.500        ; 0.000          ; High Pulse Width ; VGCS  ; Fall       ; inst25|inst12|[1]                                       ;
+; 0.500   ; 0.500        ; 0.000          ; Low Pulse Width  ; VGCS  ; Fall       ; inst25|inst12|[1]                                       ;
+; 0.500   ; 0.500        ; 0.000          ; High Pulse Width ; VGCS  ; Fall       ; inst25|inst12|[2]                                       ;
+; 0.500   ; 0.500        ; 0.000          ; Low Pulse Width  ; VGCS  ; Fall       ; inst25|inst12|[2]                                       ;
+; 0.500   ; 0.500        ; 0.000          ; High Pulse Width ; VGCS  ; Fall       ; inst26|inst12|[0]                                       ;
+; 0.500   ; 0.500        ; 0.000          ; Low Pulse Width  ; VGCS  ; Fall       ; inst26|inst12|[0]                                       ;
+; 0.500   ; 0.500        ; 0.000          ; High Pulse Width ; VGCS  ; Fall       ; inst26|inst12|[1]                                       ;
+; 0.500   ; 0.500        ; 0.000          ; Low Pulse Width  ; VGCS  ; Fall       ; inst26|inst12|[1]                                       ;
+; 0.500   ; 0.500        ; 0.000          ; High Pulse Width ; VGCS  ; Fall       ; inst27|inst12|[0]                                       ;
+; 0.500   ; 0.500        ; 0.000          ; Low Pulse Width  ; VGCS  ; Fall       ; inst27|inst12|[0]                                       ;
+; 0.500   ; 0.500        ; 0.000          ; High Pulse Width ; VGCS  ; Fall       ; inst27|inst12|[1]                                       ;
+; 0.500   ; 0.500        ; 0.000          ; Low Pulse Width  ; VGCS  ; Fall       ; inst27|inst12|[1]                                       ;
+; 0.500   ; 0.500        ; 0.000          ; High Pulse Width ; VGCS  ; Fall       ; inst46|inst4|inst12|[1]                                 ;
+; 0.500   ; 0.500        ; 0.000          ; Low Pulse Width  ; VGCS  ; Fall       ; inst46|inst4|inst12|[1]                                 ;
+; 0.500   ; 0.500        ; 0.000          ; High Pulse Width ; VGCS  ; Fall       ; inst46|inst4|inst16|[1]                                 ;
+; 0.500   ; 0.500        ; 0.000          ; Low Pulse Width  ; VGCS  ; Fall       ; inst46|inst4|inst16|[1]                                 ;
+; 0.500   ; 0.500        ; 0.000          ; High Pulse Width ; VGCS  ; Fall       ; inst46|inst4|inst20|[1]                                 ;
+; 0.500   ; 0.500        ; 0.000          ; Low Pulse Width  ; VGCS  ; Fall       ; inst46|inst4|inst20|[1]                                 ;
+; 0.500   ; 0.500        ; 0.000          ; High Pulse Width ; VGCS  ; Fall       ; inst46|inst4|inst24|[1]                                 ;
+; 0.500   ; 0.500        ; 0.000          ; Low Pulse Width  ; VGCS  ; Fall       ; inst46|inst4|inst24|[1]                                 ;
+; 0.500   ; 0.500        ; 0.000          ; High Pulse Width ; VGCS  ; Fall       ; inst46|inst|inst12|[1]                                  ;
+; 0.500   ; 0.500        ; 0.000          ; Low Pulse Width  ; VGCS  ; Fall       ; inst46|inst|inst12|[1]                                  ;
+; 0.500   ; 0.500        ; 0.000          ; High Pulse Width ; VGCS  ; Fall       ; inst46|inst|inst16|[1]                                  ;
+; 0.500   ; 0.500        ; 0.000          ; Low Pulse Width  ; VGCS  ; Fall       ; inst46|inst|inst16|[1]                                  ;
+; 0.500   ; 0.500        ; 0.000          ; High Pulse Width ; VGCS  ; Fall       ; inst46|inst|inst20|[1]                                  ;
+; 0.500   ; 0.500        ; 0.000          ; Low Pulse Width  ; VGCS  ; Fall       ; inst46|inst|inst20|[1]                                  ;
+; 0.500   ; 0.500        ; 0.000          ; High Pulse Width ; VGCS  ; Fall       ; inst46|inst|inst24|[1]                                  ;
+; 0.500   ; 0.500        ; 0.000          ; Low Pulse Width  ; VGCS  ; Fall       ; inst46|inst|inst24|[1]                                  ;
+; 0.500   ; 0.500        ; 0.000          ; High Pulse Width ; VGCS  ; Rise       ; inst60~0|[0]                                            ;
+; 0.500   ; 0.500        ; 0.000          ; Low Pulse Width  ; VGCS  ; Rise       ; inst60~0|[0]                                            ;
+; 0.500   ; 0.500        ; 0.000          ; High Pulse Width ; VGCS  ; Fall       ; inst60~0|dataout                                        ;
+; 0.500   ; 0.500        ; 0.000          ; Low Pulse Width  ; VGCS  ; Fall       ; inst60~0|dataout                                        ;
+; 0.500   ; 0.500        ; 0.000          ; High Pulse Width ; VGCS  ; Fall       ; inst96|inst6|[1]                                        ;
+; 0.500   ; 0.500        ; 0.000          ; Low Pulse Width  ; VGCS  ; Fall       ; inst96|inst6|[1]                                        ;
+; 0.500   ; 0.500        ; 0.000          ; High Pulse Width ; VGCS  ; Fall       ; inst96|inst6|[2]                                        ;
+; 0.500   ; 0.500        ; 0.000          ; Low Pulse Width  ; VGCS  ; Fall       ; inst96|inst6|[2]                                        ;
+; 0.500   ; 0.500        ; 0.000          ; High Pulse Width ; VGCS  ; Fall       ; inst96|inst7|[1]                                        ;
+; 0.500   ; 0.500        ; 0.000          ; Low Pulse Width  ; VGCS  ; Fall       ; inst96|inst7|[1]                                        ;
+; 0.500   ; 0.500        ; 0.000          ; High Pulse Width ; VGCS  ; Fall       ; inst96|inst7|[2]                                        ;
+; 0.500   ; 0.500        ; 0.000          ; Low Pulse Width  ; VGCS  ; Fall       ; inst96|inst7|[2]                                        ;
+; 0.500   ; 0.500        ; 0.000          ; High Pulse Width ; VGCS  ; Fall       ; inst96|inst8|[1]                                        ;
+; 0.500   ; 0.500        ; 0.000          ; Low Pulse Width  ; VGCS  ; Fall       ; inst96|inst8|[1]                                        ;
+; 0.500   ; 0.500        ; 0.000          ; High Pulse Width ; VGCS  ; Fall       ; inst96|inst8|[2]                                        ;
+; 0.500   ; 0.500        ; 0.000          ; Low Pulse Width  ; VGCS  ; Fall       ; inst96|inst8|[2]                                        ;
+; 0.500   ; 0.500        ; 0.000          ; High Pulse Width ; VGCS  ; Rise       ; inst97~11|datain[0]                                     ;
+; 0.500   ; 0.500        ; 0.000          ; Low Pulse Width  ; VGCS  ; Rise       ; inst97~11|datain[0]                                     ;
+; 0.500   ; 0.500        ; 0.000          ; High Pulse Width ; VGCS  ; Fall       ; inst97~11|dataout                                       ;
+; 0.500   ; 0.500        ; 0.000          ; Low Pulse Width  ; VGCS  ; Fall       ; inst97~11|dataout                                       ;
+; 0.500   ; 0.500        ; 0.000          ; High Pulse Width ; VGCS  ; Rise       ; inst97~6|datain[0]                                      ;
+; 0.500   ; 0.500        ; 0.000          ; Low Pulse Width  ; VGCS  ; Rise       ; inst97~6|datain[0]                                      ;
+; 0.500   ; 0.500        ; 0.000          ; High Pulse Width ; VGCS  ; Fall       ; inst97~6|dataout                                        ;
+; 0.500   ; 0.500        ; 0.000          ; Low Pulse Width  ; VGCS  ; Fall       ; inst97~6|dataout                                        ;
+; 0.500   ; 0.500        ; 0.000          ; High Pulse Width ; VGCS  ; Rise       ; inst99~0|datain[1]                                      ;
+; 0.500   ; 0.500        ; 0.000          ; Low Pulse Width  ; VGCS  ; Rise       ; inst99~0|datain[1]                                      ;
+; 0.500   ; 0.500        ; 0.000          ; High Pulse Width ; VGCS  ; Fall       ; inst99~0|dataout                                        ;
+; 0.500   ; 0.500        ; 0.000          ; Low Pulse Width  ; VGCS  ; Fall       ; inst99~0|dataout                                        ;
+; 0.500   ; 0.500        ; 0.000          ; High Pulse Width ; VGCS  ; Fall       ; inst99~1|datain[1]                                      ;
+; 0.500   ; 0.500        ; 0.000          ; Low Pulse Width  ; VGCS  ; Fall       ; inst99~1|datain[1]                                      ;
+; 0.500   ; 0.500        ; 0.000          ; High Pulse Width ; VGCS  ; Fall       ; inst99~1|dataout                                        ;
+; 0.500   ; 0.500        ; 0.000          ; Low Pulse Width  ; VGCS  ; Fall       ; inst99~1|dataout                                        ;
++---------+--------------+----------------+------------------+-------+------------+---------------------------------------------------------+
+
+
++------------------------------------------------------------------------------------------------------------+
+; Minimum Pulse Width: 'CPALE'                                                                               ;
++--------+--------------+----------------+------------------+-------+------------+---------------------------+
+; Slack  ; Actual Width ; Required Width ; Type             ; Clock ; Clock Edge ; Target                    ;
++--------+--------------+----------------+------------------+-------+------------+---------------------------+
+; -3.500 ; 0.500        ; 4.000          ; High Pulse Width ; CPALE ; Fall       ; 4latchedge0b:inst22|inst6 ;
+; -3.500 ; 0.500        ; 4.000          ; Low Pulse Width  ; CPALE ; Fall       ; 4latchedge0b:inst22|inst6 ;
+; -3.500 ; 0.500        ; 4.000          ; High Pulse Width ; CPALE ; Fall       ; 4latchedge0b:inst22|inst7 ;
+; -3.500 ; 0.500        ; 4.000          ; Low Pulse Width  ; CPALE ; Fall       ; 4latchedge0b:inst22|inst7 ;
+; -3.500 ; 0.500        ; 4.000          ; High Pulse Width ; CPALE ; Fall       ; 4latchedge0b:inst22|inst8 ;
+; -3.500 ; 0.500        ; 4.000          ; Low Pulse Width  ; CPALE ; Fall       ; 4latchedge0b:inst22|inst8 ;
+; 0.500  ; 0.500        ; 0.000          ; High Pulse Width ; CPALE ; Rise       ; CPALE|dataout             ;
+; 0.500  ; 0.500        ; 0.000          ; Low Pulse Width  ; CPALE ; Rise       ; CPALE|dataout             ;
+; 0.500  ; 0.500        ; 0.000          ; High Pulse Width ; CPALE ; Rise       ; inst22|inst6|[1]          ;
+; 0.500  ; 0.500        ; 0.000          ; Low Pulse Width  ; CPALE ; Rise       ; inst22|inst6|[1]          ;
+; 0.500  ; 0.500        ; 0.000          ; High Pulse Width ; CPALE ; Rise       ; inst22|inst7|[1]          ;
+; 0.500  ; 0.500        ; 0.000          ; Low Pulse Width  ; CPALE ; Rise       ; inst22|inst7|[1]          ;
+; 0.500  ; 0.500        ; 0.000          ; High Pulse Width ; CPALE ; Rise       ; inst22|inst8|[1]          ;
+; 0.500  ; 0.500        ; 0.000          ; Low Pulse Width  ; CPALE ; Rise       ; inst22|inst8|[1]          ;
++--------+--------------+----------------+------------------+-------+------------+---------------------------+
+
+
++-------------------------------------------------------------------------+
+; Setup Times                                                             ;
++-----------+------------+--------+--------+------------+-----------------+
+; Data Port ; Clock Port ; Rise   ; Fall   ; Clock Edge ; Clock Reference ;
++-----------+------------+--------+--------+------------+-----------------+
+; CPAD[*]   ; CPALE      ; 3.800  ; 3.800  ; Fall       ; CPALE           ;
+;  CPAD[0]  ; CPALE      ; 3.700  ; 3.700  ; Fall       ; CPALE           ;
+;  CPAD[1]  ; CPALE      ; 3.600  ; 3.600  ; Fall       ; CPALE           ;
+;  CPAD[2]  ; CPALE      ; 3.800  ; 3.800  ; Fall       ; CPALE           ;
+; VGD[*]    ; VGCS       ; -0.500 ; -0.500 ; Rise       ; VGCS            ;
+;  VGD[0]   ; VGCS       ; -0.500 ; -0.500 ; Rise       ; VGCS            ;
+;  VGD[1]   ; VGCS       ; -0.500 ; -0.500 ; Rise       ; VGCS            ;
+;  VGD[2]   ; VGCS       ; -0.500 ; -0.500 ; Rise       ; VGCS            ;
+;  VGD[3]   ; VGCS       ; -0.500 ; -0.500 ; Rise       ; VGCS            ;
+;  VGD[4]   ; VGCS       ; -0.500 ; -0.500 ; Rise       ; VGCS            ;
+;  VGD[5]   ; VGCS       ; -0.500 ; -0.500 ; Rise       ; VGCS            ;
+;  VGD[6]   ; VGCS       ; -0.500 ; -0.500 ; Rise       ; VGCS            ;
+;  VGD[7]   ; VGCS       ; -0.500 ; -0.500 ; Rise       ; VGCS            ;
+; VGA[*]    ; VGCS       ; 6.500  ; 6.500  ; Fall       ; VGCS            ;
+;  VGA[0]   ; VGCS       ; 6.500  ; 6.500  ; Fall       ; VGCS            ;
+;  VGA[1]   ; VGCS       ; 6.500  ; 6.500  ; Fall       ; VGCS            ;
+; VGRE      ; VGCS       ; 6.400  ; 6.400  ; Fall       ; VGCS            ;
++-----------+------------+--------+--------+------------+-----------------+
+
+
++-------------------------------------------------------------------------+
+; Hold Times                                                              ;
++-----------+------------+--------+--------+------------+-----------------+
+; Data Port ; Clock Port ; Rise   ; Fall   ; Clock Edge ; Clock Reference ;
++-----------+------------+--------+--------+------------+-----------------+
+; CPAD[*]   ; CPALE      ; 0.600  ; 0.600  ; Fall       ; CPALE           ;
+;  CPAD[0]  ; CPALE      ; 0.500  ; 0.500  ; Fall       ; CPALE           ;
+;  CPAD[1]  ; CPALE      ; 0.600  ; 0.600  ; Fall       ; CPALE           ;
+;  CPAD[2]  ; CPALE      ; 0.400  ; 0.400  ; Fall       ; CPALE           ;
+; VGD[*]    ; VGCS       ; 4.700  ; 4.700  ; Rise       ; VGCS            ;
+;  VGD[0]   ; VGCS       ; 4.700  ; 4.700  ; Rise       ; VGCS            ;
+;  VGD[1]   ; VGCS       ; 4.700  ; 4.700  ; Rise       ; VGCS            ;
+;  VGD[2]   ; VGCS       ; 4.700  ; 4.700  ; Rise       ; VGCS            ;
+;  VGD[3]   ; VGCS       ; 4.700  ; 4.700  ; Rise       ; VGCS            ;
+;  VGD[4]   ; VGCS       ; 4.700  ; 4.700  ; Rise       ; VGCS            ;
+;  VGD[5]   ; VGCS       ; 4.700  ; 4.700  ; Rise       ; VGCS            ;
+;  VGD[6]   ; VGCS       ; 4.700  ; 4.700  ; Rise       ; VGCS            ;
+;  VGD[7]   ; VGCS       ; 4.700  ; 4.700  ; Rise       ; VGCS            ;
+; VGA[*]    ; VGCS       ; -2.300 ; -2.300 ; Fall       ; VGCS            ;
+;  VGA[0]   ; VGCS       ; -2.300 ; -2.300 ; Fall       ; VGCS            ;
+;  VGA[1]   ; VGCS       ; -2.300 ; -2.300 ; Fall       ; VGCS            ;
+; VGRE      ; VGCS       ; -2.200 ; -2.200 ; Fall       ; VGCS            ;
++-----------+------------+--------+--------+------------+-----------------+
+
+
++-------------------------------------------------------------------------+
+; Clock to Output Times                                                   ;
++-----------+------------+--------+--------+------------+-----------------+
+; Data Port ; Clock Port ; Rise   ; Fall   ; Clock Edge ; Clock Reference ;
++-----------+------------+--------+--------+------------+-----------------+
+; CPAD[*]   ; CPALE      ; 16.700 ; 16.700 ; Fall       ; CPALE           ;
+;  CPAD[0]  ; CPALE      ; 16.700 ; 16.700 ; Fall       ; CPALE           ;
+;  CPAD[1]  ; CPALE      ; 16.700 ; 16.700 ; Fall       ; CPALE           ;
+;  CPAD[2]  ; CPALE      ; 16.700 ; 16.700 ; Fall       ; CPALE           ;
+;  CPAD[3]  ; CPALE      ; 16.700 ; 16.700 ; Fall       ; CPALE           ;
+;  CPAD[4]  ; CPALE      ; 16.700 ; 16.700 ; Fall       ; CPALE           ;
+;  CPAD[5]  ; CPALE      ; 16.700 ; 16.700 ; Fall       ; CPALE           ;
+;  CPAD[6]  ; CPALE      ; 16.700 ; 16.700 ; Fall       ; CPALE           ;
+;  CPAD[7]  ; CPALE      ; 16.700 ; 16.700 ; Fall       ; CPALE           ;
+; VGD[*]    ; CPALE      ; 27.500 ; 27.500 ; Fall       ; CPALE           ;
+;  VGD[0]   ; CPALE      ; 27.400 ; 27.400 ; Fall       ; CPALE           ;
+;  VGD[1]   ; CPALE      ; 27.500 ; 27.500 ; Fall       ; CPALE           ;
+;  VGD[2]   ; CPALE      ; 27.400 ; 27.400 ; Fall       ; CPALE           ;
+;  VGD[3]   ; CPALE      ; 27.500 ; 27.500 ; Fall       ; CPALE           ;
+;  VGD[4]   ; CPALE      ; 27.500 ; 27.500 ; Fall       ; CPALE           ;
+;  VGD[5]   ; CPALE      ; 27.500 ; 27.500 ; Fall       ; CPALE           ;
+;  VGD[6]   ; CPALE      ; 27.500 ; 27.500 ; Fall       ; CPALE           ;
+;  VGD[7]   ; CPALE      ; 27.500 ; 27.500 ; Fall       ; CPALE           ;
+; CPAD[*]   ; VGCS       ; 20.600 ; 20.600 ; Rise       ; VGCS            ;
+;  CPAD[0]  ; VGCS       ; 20.600 ; 20.600 ; Rise       ; VGCS            ;
+;  CPAD[1]  ; VGCS       ; 20.600 ; 20.600 ; Rise       ; VGCS            ;
+;  CPAD[2]  ; VGCS       ; 20.600 ; 20.600 ; Rise       ; VGCS            ;
+;  CPAD[3]  ; VGCS       ; 20.600 ; 20.600 ; Rise       ; VGCS            ;
+;  CPAD[4]  ; VGCS       ; 20.600 ; 20.600 ; Rise       ; VGCS            ;
+;  CPAD[5]  ; VGCS       ; 20.600 ; 20.600 ; Rise       ; VGCS            ;
+;  CPAD[6]  ; VGCS       ; 20.600 ; 20.600 ; Rise       ; VGCS            ;
+;  CPAD[7]  ; VGCS       ; 20.500 ; 20.500 ; Rise       ; VGCS            ;
+; VGD[*]    ; VGCS       ; 20.600 ; 20.600 ; Rise       ; VGCS            ;
+;  VGD[0]   ; VGCS       ; 20.600 ; 20.600 ; Rise       ; VGCS            ;
+;  VGD[1]   ; VGCS       ; 20.600 ; 20.600 ; Rise       ; VGCS            ;
+;  VGD[2]   ; VGCS       ; 20.600 ; 20.600 ; Rise       ; VGCS            ;
+;  VGD[3]   ; VGCS       ; 20.600 ; 20.600 ; Rise       ; VGCS            ;
+;  VGD[4]   ; VGCS       ; 20.600 ; 20.600 ; Rise       ; VGCS            ;
+;  VGD[5]   ; VGCS       ; 20.600 ; 20.600 ; Rise       ; VGCS            ;
+;  VGD[6]   ; VGCS       ; 20.600 ; 20.600 ; Rise       ; VGCS            ;
+;  VGD[7]   ; VGCS       ; 20.500 ; 20.500 ; Rise       ; VGCS            ;
+; CPAD[*]   ; VGCS       ; 27.500 ; 27.500 ; Fall       ; VGCS            ;
+;  CPAD[1]  ; VGCS       ; 27.500 ; 27.500 ; Fall       ; VGCS            ;
+;  CPAD[3]  ; VGCS       ; 20.500 ; 20.500 ; Fall       ; VGCS            ;
+;  CPAD[4]  ; VGCS       ; 20.500 ; 20.500 ; Fall       ; VGCS            ;
+;  CPAD[5]  ; VGCS       ; 20.500 ; 20.500 ; Fall       ; VGCS            ;
+;  CPAD[6]  ; VGCS       ; 20.500 ; 20.500 ; Fall       ; VGCS            ;
+;  CPAD[7]  ; VGCS       ; 20.500 ; 20.500 ; Fall       ; VGCS            ;
+; CPRINT    ; VGCS       ; 20.700 ; 20.700 ; Fall       ; VGCS            ;
+; VGD[*]    ; VGCS       ; 17.200 ; 17.200 ; Fall       ; VGCS            ;
+;  VGD[0]   ; VGCS       ; 17.200 ; 17.200 ; Fall       ; VGCS            ;
+;  VGD[1]   ; VGCS       ; 17.200 ; 17.200 ; Fall       ; VGCS            ;
+;  VGD[2]   ; VGCS       ; 17.200 ; 17.200 ; Fall       ; VGCS            ;
+;  VGD[3]   ; VGCS       ; 17.200 ; 17.200 ; Fall       ; VGCS            ;
+;  VGD[4]   ; VGCS       ; 17.200 ; 17.200 ; Fall       ; VGCS            ;
+;  VGD[5]   ; VGCS       ; 17.200 ; 17.200 ; Fall       ; VGCS            ;
+;  VGD[6]   ; VGCS       ; 17.200 ; 17.200 ; Fall       ; VGCS            ;
+;  VGD[7]   ; VGCS       ; 17.200 ; 17.200 ; Fall       ; VGCS            ;
+; VGDRQ     ; VGCS       ; 13.700 ; 13.700 ; Fall       ; VGCS            ;
+; VGINTRQ   ; VGCS       ; 13.700 ; 13.700 ; Fall       ; VGCS            ;
++-----------+------------+--------+--------+------------+-----------------+
+
+
++-------------------------------------------------------------------------+
+; Minimum Clock to Output Times                                           ;
++-----------+------------+--------+--------+------------+-----------------+
+; Data Port ; Clock Port ; Rise   ; Fall   ; Clock Edge ; Clock Reference ;
++-----------+------------+--------+--------+------------+-----------------+
+; CPAD[*]   ; CPALE      ; 16.700 ; 16.700 ; Fall       ; CPALE           ;
+;  CPAD[0]  ; CPALE      ; 16.700 ; 16.700 ; Fall       ; CPALE           ;
+;  CPAD[1]  ; CPALE      ; 16.700 ; 16.700 ; Fall       ; CPALE           ;
+;  CPAD[2]  ; CPALE      ; 16.700 ; 16.700 ; Fall       ; CPALE           ;
+;  CPAD[3]  ; CPALE      ; 16.700 ; 16.700 ; Fall       ; CPALE           ;
+;  CPAD[4]  ; CPALE      ; 16.700 ; 16.700 ; Fall       ; CPALE           ;
+;  CPAD[5]  ; CPALE      ; 16.700 ; 16.700 ; Fall       ; CPALE           ;
+;  CPAD[6]  ; CPALE      ; 16.700 ; 16.700 ; Fall       ; CPALE           ;
+;  CPAD[7]  ; CPALE      ; 16.700 ; 16.700 ; Fall       ; CPALE           ;
+; VGD[*]    ; CPALE      ; 23.500 ; 23.500 ; Fall       ; CPALE           ;
+;  VGD[0]   ; CPALE      ; 23.500 ; 23.500 ; Fall       ; CPALE           ;
+;  VGD[1]   ; CPALE      ; 23.600 ; 23.600 ; Fall       ; CPALE           ;
+;  VGD[2]   ; CPALE      ; 23.500 ; 23.500 ; Fall       ; CPALE           ;
+;  VGD[3]   ; CPALE      ; 23.600 ; 23.600 ; Fall       ; CPALE           ;
+;  VGD[4]   ; CPALE      ; 23.600 ; 23.600 ; Fall       ; CPALE           ;
+;  VGD[5]   ; CPALE      ; 23.600 ; 23.600 ; Fall       ; CPALE           ;
+;  VGD[6]   ; CPALE      ; 23.600 ; 23.600 ; Fall       ; CPALE           ;
+;  VGD[7]   ; CPALE      ; 23.600 ; 23.600 ; Fall       ; CPALE           ;
+; CPAD[*]   ; VGCS       ; 20.500 ; 20.500 ; Rise       ; VGCS            ;
+;  CPAD[0]  ; VGCS       ; 20.600 ; 20.600 ; Rise       ; VGCS            ;
+;  CPAD[1]  ; VGCS       ; 20.600 ; 20.600 ; Rise       ; VGCS            ;
+;  CPAD[2]  ; VGCS       ; 20.600 ; 20.600 ; Rise       ; VGCS            ;
+;  CPAD[3]  ; VGCS       ; 20.600 ; 20.600 ; Rise       ; VGCS            ;
+;  CPAD[4]  ; VGCS       ; 20.600 ; 20.600 ; Rise       ; VGCS            ;
+;  CPAD[5]  ; VGCS       ; 20.600 ; 20.600 ; Rise       ; VGCS            ;
+;  CPAD[6]  ; VGCS       ; 20.600 ; 20.600 ; Rise       ; VGCS            ;
+;  CPAD[7]  ; VGCS       ; 20.500 ; 20.500 ; Rise       ; VGCS            ;
+; VGD[*]    ; VGCS       ; 17.200 ; 17.200 ; Rise       ; VGCS            ;
+;  VGD[0]   ; VGCS       ; 17.200 ; 17.200 ; Rise       ; VGCS            ;
+;  VGD[1]   ; VGCS       ; 17.200 ; 17.200 ; Rise       ; VGCS            ;
+;  VGD[2]   ; VGCS       ; 17.200 ; 17.200 ; Rise       ; VGCS            ;
+;  VGD[3]   ; VGCS       ; 17.200 ; 17.200 ; Rise       ; VGCS            ;
+;  VGD[4]   ; VGCS       ; 17.200 ; 17.200 ; Rise       ; VGCS            ;
+;  VGD[5]   ; VGCS       ; 17.200 ; 17.200 ; Rise       ; VGCS            ;
+;  VGD[6]   ; VGCS       ; 17.200 ; 17.200 ; Rise       ; VGCS            ;
+;  VGD[7]   ; VGCS       ; 17.200 ; 17.200 ; Rise       ; VGCS            ;
+; CPAD[*]   ; VGCS       ; 20.500 ; 20.500 ; Fall       ; VGCS            ;
+;  CPAD[1]  ; VGCS       ; 20.500 ; 20.500 ; Fall       ; VGCS            ;
+;  CPAD[3]  ; VGCS       ; 20.500 ; 20.500 ; Fall       ; VGCS            ;
+;  CPAD[4]  ; VGCS       ; 20.500 ; 20.500 ; Fall       ; VGCS            ;
+;  CPAD[5]  ; VGCS       ; 20.500 ; 20.500 ; Fall       ; VGCS            ;
+;  CPAD[6]  ; VGCS       ; 20.500 ; 20.500 ; Fall       ; VGCS            ;
+;  CPAD[7]  ; VGCS       ; 20.500 ; 20.500 ; Fall       ; VGCS            ;
+; CPRINT    ; VGCS       ; 13.700 ; 13.700 ; Fall       ; VGCS            ;
+; VGD[*]    ; VGCS       ; 17.200 ; 17.200 ; Fall       ; VGCS            ;
+;  VGD[0]   ; VGCS       ; 17.200 ; 17.200 ; Fall       ; VGCS            ;
+;  VGD[1]   ; VGCS       ; 17.200 ; 17.200 ; Fall       ; VGCS            ;
+;  VGD[2]   ; VGCS       ; 17.200 ; 17.200 ; Fall       ; VGCS            ;
+;  VGD[3]   ; VGCS       ; 17.200 ; 17.200 ; Fall       ; VGCS            ;
+;  VGD[4]   ; VGCS       ; 17.200 ; 17.200 ; Fall       ; VGCS            ;
+;  VGD[5]   ; VGCS       ; 17.200 ; 17.200 ; Fall       ; VGCS            ;
+;  VGD[6]   ; VGCS       ; 17.200 ; 17.200 ; Fall       ; VGCS            ;
+;  VGD[7]   ; VGCS       ; 17.200 ; 17.200 ; Fall       ; VGCS            ;
+; VGDRQ     ; VGCS       ; 13.700 ; 13.700 ; Fall       ; VGCS            ;
+; VGINTRQ   ; VGCS       ; 13.700 ; 13.700 ; Fall       ; VGCS            ;
++-----------+------------+--------+--------+------------+-----------------+
+
+
++--------------------------------------------------------------+
+; Propagation Delay                                            ;
++------------+-------------+--------+--------+--------+--------+
+; Input Port ; Output Port ; RR     ; RF     ; FR     ; FF     ;
++------------+-------------+--------+--------+--------+--------+
+; CPAD[0]    ; VGD[0]      ;        ; 16.900 ; 16.900 ;        ;
+; CPAD[1]    ; VGD[1]      ;        ; 16.900 ; 16.900 ;        ;
+; CPAD[2]    ; VGD[2]      ;        ; 17.000 ; 17.000 ;        ;
+; CPAD[3]    ; VGD[3]      ;        ; 16.900 ; 16.900 ;        ;
+; CPAD[4]    ; VGD[4]      ;        ; 16.900 ; 16.900 ;        ;
+; CPAD[5]    ; VGD[5]      ;        ; 16.900 ; 16.900 ;        ;
+; CPAD[6]    ; VGD[6]      ;        ; 16.900 ; 16.900 ;        ;
+; CPAD[7]    ; VGD[7]      ;        ; 16.900 ; 16.900 ;        ;
+; CPRD       ; CPAD[0]     ; 15.500 ;        ;        ; 15.500 ;
+; CPRD       ; CPAD[1]     ; 15.500 ;        ;        ; 15.500 ;
+; CPRD       ; CPAD[2]     ; 15.500 ;        ;        ; 15.500 ;
+; CPRD       ; CPAD[3]     ; 15.500 ;        ;        ; 15.500 ;
+; CPRD       ; CPAD[4]     ; 15.500 ;        ;        ; 15.500 ;
+; CPRD       ; CPAD[5]     ; 15.500 ;        ;        ; 15.500 ;
+; CPRD       ; CPAD[6]     ; 15.500 ;        ;        ; 15.500 ;
+; CPRD       ; CPAD[7]     ; 15.500 ;        ;        ; 15.500 ;
+; CPWR       ; VGD[0]      ; 17.100 ; 21.000 ; 21.000 ; 17.100 ;
+; CPWR       ; VGD[1]      ; 17.200 ; 21.100 ; 21.100 ; 17.200 ;
+; CPWR       ; VGD[2]      ; 17.100 ; 21.000 ; 21.000 ; 17.100 ;
+; CPWR       ; VGD[3]      ; 17.200 ; 21.100 ; 21.100 ; 17.200 ;
+; CPWR       ; VGD[4]      ; 17.200 ; 21.100 ; 21.100 ; 17.200 ;
+; CPWR       ; VGD[5]      ; 17.200 ; 21.100 ; 21.100 ; 17.200 ;
+; CPWR       ; VGD[6]      ; 17.200 ; 21.100 ; 21.100 ; 17.200 ;
+; CPWR       ; VGD[7]      ; 17.200 ; 21.100 ; 21.100 ; 17.200 ;
+; VGA[0]     ; VGD[0]      ; 10.200 ; 10.200 ; 10.200 ; 10.200 ;
+; VGA[0]     ; VGD[1]      ; 10.200 ; 10.200 ; 10.200 ; 10.200 ;
+; VGA[0]     ; VGD[2]      ; 10.200 ; 10.200 ; 10.200 ; 10.200 ;
+; VGA[0]     ; VGD[3]      ; 10.200 ; 10.200 ; 10.200 ; 10.200 ;
+; VGA[0]     ; VGD[4]      ; 10.200 ; 10.200 ; 10.200 ; 10.200 ;
+; VGA[0]     ; VGD[5]      ; 10.200 ; 10.200 ; 10.200 ; 10.200 ;
+; VGA[0]     ; VGD[6]      ; 10.200 ; 10.200 ; 10.200 ; 10.200 ;
+; VGA[0]     ; VGD[7]      ; 10.200 ; 10.200 ; 10.200 ; 10.200 ;
+; VGA[1]     ; VGD[0]      ; 10.200 ; 10.200 ; 10.200 ; 10.200 ;
+; VGA[1]     ; VGD[1]      ; 10.200 ; 10.200 ; 10.200 ; 10.200 ;
+; VGA[1]     ; VGD[2]      ; 10.200 ; 10.200 ; 10.200 ; 10.200 ;
+; VGA[1]     ; VGD[3]      ; 10.200 ; 10.200 ; 10.200 ; 10.200 ;
+; VGA[1]     ; VGD[4]      ; 10.200 ; 10.200 ; 10.200 ; 10.200 ;
+; VGA[1]     ; VGD[5]      ; 10.200 ; 10.200 ; 10.200 ; 10.200 ;
+; VGA[1]     ; VGD[6]      ; 10.200 ; 10.200 ; 10.200 ; 10.200 ;
+; VGA[1]     ; VGD[7]      ; 10.200 ; 10.200 ; 10.200 ; 10.200 ;
+; VGF_RAWRD  ; CPRFREQ     ; 10.000 ;        ;        ; 10.000 ;
+; VGF_READY  ; CPAD[2]     ; 10.000 ;        ;        ; 10.000 ;
+; VGRE       ; VGD[0]      ;        ; 17.100 ; 17.100 ;        ;
+; VGRE       ; VGD[1]      ;        ; 17.100 ; 17.100 ;        ;
+; VGRE       ; VGD[2]      ;        ; 17.100 ; 17.100 ;        ;
+; VGRE       ; VGD[3]      ;        ; 17.100 ; 17.100 ;        ;
+; VGRE       ; VGD[4]      ;        ; 17.100 ; 17.100 ;        ;
+; VGRE       ; VGD[5]      ;        ; 17.100 ; 17.100 ;        ;
+; VGRE       ; VGD[6]      ;        ; 17.100 ; 17.100 ;        ;
+; VGRE       ; VGD[7]      ;        ; 17.100 ; 17.100 ;        ;
++------------+-------------+--------+--------+--------+--------+
+
+
++--------------------------------------------------------------+
+; Minimum Propagation Delay                                    ;
++------------+-------------+--------+--------+--------+--------+
+; Input Port ; Output Port ; RR     ; RF     ; FR     ; FF     ;
++------------+-------------+--------+--------+--------+--------+
+; CPAD[0]    ; VGD[0]      ;        ; 16.900 ; 16.900 ;        ;
+; CPAD[1]    ; VGD[1]      ;        ; 16.900 ; 16.900 ;        ;
+; CPAD[2]    ; VGD[2]      ;        ; 17.000 ; 17.000 ;        ;
+; CPAD[3]    ; VGD[3]      ;        ; 16.900 ; 16.900 ;        ;
+; CPAD[4]    ; VGD[4]      ;        ; 16.900 ; 16.900 ;        ;
+; CPAD[5]    ; VGD[5]      ;        ; 16.900 ; 16.900 ;        ;
+; CPAD[6]    ; VGD[6]      ;        ; 16.900 ; 16.900 ;        ;
+; CPAD[7]    ; VGD[7]      ;        ; 16.900 ; 16.900 ;        ;
+; CPRD       ; CPAD[0]     ; 15.500 ;        ;        ; 15.500 ;
+; CPRD       ; CPAD[1]     ; 15.500 ;        ;        ; 15.500 ;
+; CPRD       ; CPAD[2]     ; 15.500 ;        ;        ; 15.500 ;
+; CPRD       ; CPAD[3]     ; 15.500 ;        ;        ; 15.500 ;
+; CPRD       ; CPAD[4]     ; 15.500 ;        ;        ; 15.500 ;
+; CPRD       ; CPAD[5]     ; 15.500 ;        ;        ; 15.500 ;
+; CPRD       ; CPAD[6]     ; 15.500 ;        ;        ; 15.500 ;
+; CPRD       ; CPAD[7]     ; 15.500 ;        ;        ; 15.500 ;
+; CPWR       ; VGD[0]      ; 17.100 ; 21.000 ; 21.000 ; 17.100 ;
+; CPWR       ; VGD[1]      ; 17.200 ; 21.100 ; 21.100 ; 17.200 ;
+; CPWR       ; VGD[2]      ; 17.100 ; 21.000 ; 21.000 ; 17.100 ;
+; CPWR       ; VGD[3]      ; 17.200 ; 21.100 ; 21.100 ; 17.200 ;
+; CPWR       ; VGD[4]      ; 17.200 ; 21.100 ; 21.100 ; 17.200 ;
+; CPWR       ; VGD[5]      ; 17.200 ; 21.100 ; 21.100 ; 17.200 ;
+; CPWR       ; VGD[6]      ; 17.200 ; 21.100 ; 21.100 ; 17.200 ;
+; CPWR       ; VGD[7]      ; 17.200 ; 21.100 ; 21.100 ; 17.200 ;
+; VGA[0]     ; VGD[0]      ; 10.200 ; 10.200 ; 10.200 ; 10.200 ;
+; VGA[0]     ; VGD[1]      ; 10.200 ; 10.200 ; 10.200 ; 10.200 ;
+; VGA[0]     ; VGD[2]      ; 10.200 ; 10.200 ; 10.200 ; 10.200 ;
+; VGA[0]     ; VGD[3]      ; 10.200 ; 10.200 ; 10.200 ; 10.200 ;
+; VGA[0]     ; VGD[4]      ; 10.200 ; 10.200 ; 10.200 ; 10.200 ;
+; VGA[0]     ; VGD[5]      ; 10.200 ; 10.200 ; 10.200 ; 10.200 ;
+; VGA[0]     ; VGD[6]      ; 10.200 ; 10.200 ; 10.200 ; 10.200 ;
+; VGA[0]     ; VGD[7]      ; 10.200 ; 10.200 ; 10.200 ; 10.200 ;
+; VGA[1]     ; VGD[0]      ; 10.200 ; 10.200 ; 10.200 ; 10.200 ;
+; VGA[1]     ; VGD[1]      ; 10.200 ; 10.200 ; 10.200 ; 10.200 ;
+; VGA[1]     ; VGD[2]      ; 10.200 ; 10.200 ; 10.200 ; 10.200 ;
+; VGA[1]     ; VGD[3]      ; 10.200 ; 10.200 ; 10.200 ; 10.200 ;
+; VGA[1]     ; VGD[4]      ; 10.200 ; 10.200 ; 10.200 ; 10.200 ;
+; VGA[1]     ; VGD[5]      ; 10.200 ; 10.200 ; 10.200 ; 10.200 ;
+; VGA[1]     ; VGD[6]      ; 10.200 ; 10.200 ; 10.200 ; 10.200 ;
+; VGA[1]     ; VGD[7]      ; 10.200 ; 10.200 ; 10.200 ; 10.200 ;
+; VGF_RAWRD  ; CPRFREQ     ; 10.000 ;        ;        ; 10.000 ;
+; VGF_READY  ; CPAD[2]     ; 10.000 ;        ;        ; 10.000 ;
+; VGRE       ; VGD[0]      ;        ; 15.600 ; 15.600 ;        ;
+; VGRE       ; VGD[1]      ;        ; 15.600 ; 15.600 ;        ;
+; VGRE       ; VGD[2]      ;        ; 15.600 ; 15.600 ;        ;
+; VGRE       ; VGD[3]      ;        ; 15.600 ; 15.600 ;        ;
+; VGRE       ; VGD[4]      ;        ; 15.600 ; 15.600 ;        ;
+; VGRE       ; VGD[5]      ;        ; 15.600 ; 15.600 ;        ;
+; VGRE       ; VGD[6]      ;        ; 15.600 ; 15.600 ;        ;
+; VGRE       ; VGD[7]      ;        ; 15.600 ; 15.600 ;        ;
++------------+-------------+--------+--------+--------+--------+
+
+
++-----------------------------------------------------------------------+
+; Output Enable Times                                                   ;
++-----------+------------+--------+------+------------+-----------------+
+; Data Port ; Clock Port ; Rise   ; Fall ; Clock Edge ; Clock Reference ;
++-----------+------------+--------+------+------------+-----------------+
+; VGD[*]    ; VGCS       ; 15.700 ;      ; Rise       ; VGCS            ;
+;  VGD[0]   ; VGCS       ; 15.700 ;      ; Rise       ; VGCS            ;
+;  VGD[1]   ; VGCS       ; 15.700 ;      ; Rise       ; VGCS            ;
+;  VGD[2]   ; VGCS       ; 15.700 ;      ; Rise       ; VGCS            ;
+;  VGD[3]   ; VGCS       ; 15.700 ;      ; Rise       ; VGCS            ;
+;  VGD[4]   ; VGCS       ; 15.700 ;      ; Rise       ; VGCS            ;
+;  VGD[5]   ; VGCS       ; 15.700 ;      ; Rise       ; VGCS            ;
+;  VGD[6]   ; VGCS       ; 15.700 ;      ; Rise       ; VGCS            ;
+;  VGD[7]   ; VGCS       ; 15.700 ;      ; Rise       ; VGCS            ;
+; VGD[*]    ; VGCS       ; 15.700 ;      ; Fall       ; VGCS            ;
+;  VGD[0]   ; VGCS       ; 15.700 ;      ; Fall       ; VGCS            ;
+;  VGD[1]   ; VGCS       ; 15.700 ;      ; Fall       ; VGCS            ;
+;  VGD[2]   ; VGCS       ; 15.700 ;      ; Fall       ; VGCS            ;
+;  VGD[3]   ; VGCS       ; 15.700 ;      ; Fall       ; VGCS            ;
+;  VGD[4]   ; VGCS       ; 15.700 ;      ; Fall       ; VGCS            ;
+;  VGD[5]   ; VGCS       ; 15.700 ;      ; Fall       ; VGCS            ;
+;  VGD[6]   ; VGCS       ; 15.700 ;      ; Fall       ; VGCS            ;
+;  VGD[7]   ; VGCS       ; 15.700 ;      ; Fall       ; VGCS            ;
++-----------+------------+--------+------+------------+-----------------+
+
+
++-----------------------------------------------------------------------+
+; Minimum Output Enable Times                                           ;
++-----------+------------+--------+------+------------+-----------------+
+; Data Port ; Clock Port ; Rise   ; Fall ; Clock Edge ; Clock Reference ;
++-----------+------------+--------+------+------------+-----------------+
+; VGD[*]    ; VGCS       ; 15.700 ;      ; Rise       ; VGCS            ;
+;  VGD[0]   ; VGCS       ; 15.700 ;      ; Rise       ; VGCS            ;
+;  VGD[1]   ; VGCS       ; 15.700 ;      ; Rise       ; VGCS            ;
+;  VGD[2]   ; VGCS       ; 15.700 ;      ; Rise       ; VGCS            ;
+;  VGD[3]   ; VGCS       ; 15.700 ;      ; Rise       ; VGCS            ;
+;  VGD[4]   ; VGCS       ; 15.700 ;      ; Rise       ; VGCS            ;
+;  VGD[5]   ; VGCS       ; 15.700 ;      ; Rise       ; VGCS            ;
+;  VGD[6]   ; VGCS       ; 15.700 ;      ; Rise       ; VGCS            ;
+;  VGD[7]   ; VGCS       ; 15.700 ;      ; Rise       ; VGCS            ;
+; VGD[*]    ; VGCS       ; 15.700 ;      ; Fall       ; VGCS            ;
+;  VGD[0]   ; VGCS       ; 15.700 ;      ; Fall       ; VGCS            ;
+;  VGD[1]   ; VGCS       ; 15.700 ;      ; Fall       ; VGCS            ;
+;  VGD[2]   ; VGCS       ; 15.700 ;      ; Fall       ; VGCS            ;
+;  VGD[3]   ; VGCS       ; 15.700 ;      ; Fall       ; VGCS            ;
+;  VGD[4]   ; VGCS       ; 15.700 ;      ; Fall       ; VGCS            ;
+;  VGD[5]   ; VGCS       ; 15.700 ;      ; Fall       ; VGCS            ;
+;  VGD[6]   ; VGCS       ; 15.700 ;      ; Fall       ; VGCS            ;
+;  VGD[7]   ; VGCS       ; 15.700 ;      ; Fall       ; VGCS            ;
++-----------+------------+--------+------+------------+-----------------+
+
+
++-------------------------------------------------------------------------------+
+; Output Disable Times                                                          ;
++-----------+------------+-----------+-----------+------------+-----------------+
+; Data Port ; Clock Port ; 0 to Hi-Z ; 1 to Hi-Z ; Clock Edge ; Clock Reference ;
++-----------+------------+-----------+-----------+------------+-----------------+
+; VGD[*]    ; VGCS       ; 15.700    ;           ; Rise       ; VGCS            ;
+;  VGD[0]   ; VGCS       ; 15.700    ;           ; Rise       ; VGCS            ;
+;  VGD[1]   ; VGCS       ; 15.700    ;           ; Rise       ; VGCS            ;
+;  VGD[2]   ; VGCS       ; 15.700    ;           ; Rise       ; VGCS            ;
+;  VGD[3]   ; VGCS       ; 15.700    ;           ; Rise       ; VGCS            ;
+;  VGD[4]   ; VGCS       ; 15.700    ;           ; Rise       ; VGCS            ;
+;  VGD[5]   ; VGCS       ; 15.700    ;           ; Rise       ; VGCS            ;
+;  VGD[6]   ; VGCS       ; 15.700    ;           ; Rise       ; VGCS            ;
+;  VGD[7]   ; VGCS       ; 15.700    ;           ; Rise       ; VGCS            ;
+; VGD[*]    ; VGCS       ; 15.700    ;           ; Fall       ; VGCS            ;
+;  VGD[0]   ; VGCS       ; 15.700    ;           ; Fall       ; VGCS            ;
+;  VGD[1]   ; VGCS       ; 15.700    ;           ; Fall       ; VGCS            ;
+;  VGD[2]   ; VGCS       ; 15.700    ;           ; Fall       ; VGCS            ;
+;  VGD[3]   ; VGCS       ; 15.700    ;           ; Fall       ; VGCS            ;
+;  VGD[4]   ; VGCS       ; 15.700    ;           ; Fall       ; VGCS            ;
+;  VGD[5]   ; VGCS       ; 15.700    ;           ; Fall       ; VGCS            ;
+;  VGD[6]   ; VGCS       ; 15.700    ;           ; Fall       ; VGCS            ;
+;  VGD[7]   ; VGCS       ; 15.700    ;           ; Fall       ; VGCS            ;
++-----------+------------+-----------+-----------+------------+-----------------+
+
+
++-------------------------------------------------------------------------------+
+; Minimum Output Disable Times                                                  ;
++-----------+------------+-----------+-----------+------------+-----------------+
+; Data Port ; Clock Port ; 0 to Hi-Z ; 1 to Hi-Z ; Clock Edge ; Clock Reference ;
++-----------+------------+-----------+-----------+------------+-----------------+
+; VGD[*]    ; VGCS       ; 15.700    ;           ; Rise       ; VGCS            ;
+;  VGD[0]   ; VGCS       ; 15.700    ;           ; Rise       ; VGCS            ;
+;  VGD[1]   ; VGCS       ; 15.700    ;           ; Rise       ; VGCS            ;
+;  VGD[2]   ; VGCS       ; 15.700    ;           ; Rise       ; VGCS            ;
+;  VGD[3]   ; VGCS       ; 15.700    ;           ; Rise       ; VGCS            ;
+;  VGD[4]   ; VGCS       ; 15.700    ;           ; Rise       ; VGCS            ;
+;  VGD[5]   ; VGCS       ; 15.700    ;           ; Rise       ; VGCS            ;
+;  VGD[6]   ; VGCS       ; 15.700    ;           ; Rise       ; VGCS            ;
+;  VGD[7]   ; VGCS       ; 15.700    ;           ; Rise       ; VGCS            ;
+; VGD[*]    ; VGCS       ; 15.700    ;           ; Fall       ; VGCS            ;
+;  VGD[0]   ; VGCS       ; 15.700    ;           ; Fall       ; VGCS            ;
+;  VGD[1]   ; VGCS       ; 15.700    ;           ; Fall       ; VGCS            ;
+;  VGD[2]   ; VGCS       ; 15.700    ;           ; Fall       ; VGCS            ;
+;  VGD[3]   ; VGCS       ; 15.700    ;           ; Fall       ; VGCS            ;
+;  VGD[4]   ; VGCS       ; 15.700    ;           ; Fall       ; VGCS            ;
+;  VGD[5]   ; VGCS       ; 15.700    ;           ; Fall       ; VGCS            ;
+;  VGD[6]   ; VGCS       ; 15.700    ;           ; Fall       ; VGCS            ;
+;  VGD[7]   ; VGCS       ; 15.700    ;           ; Fall       ; VGCS            ;
++-----------+------------+-----------+-----------+------------+-----------------+
+
+
++-------------------------------------------------------------------+
+; Recovery Transfers                                                ;
++------------+----------+----------+----------+----------+----------+
+; From Clock ; To Clock ; RR Paths ; FR Paths ; RF Paths ; FF Paths ;
++------------+----------+----------+----------+----------+----------+
+; CPALE      ; VGCS     ; 0        ; 48       ; 0        ; 11       ;
++------------+----------+----------+----------+----------+----------+
+Entries labeled "false path" only account for clock-to-clock false paths and not path-based false paths. As a result, actual path counts may be lower than reported.
+
+
++-------------------------------------------------------------------+
+; Removal Transfers                                                 ;
++------------+----------+----------+----------+----------+----------+
+; From Clock ; To Clock ; RR Paths ; FR Paths ; RF Paths ; FF Paths ;
++------------+----------+----------+----------+----------+----------+
+; CPALE      ; VGCS     ; 0        ; 48       ; 0        ; 11       ;
++------------+----------+----------+----------+----------+----------+
+Entries labeled "false path" only account for clock-to-clock false paths and not path-based false paths. As a result, actual path counts may be lower than reported.
+
+
+---------------
+; Report TCCS ;
+---------------
+No dedicated SERDES Transmitter circuitry present in device or used in design
+
+
+---------------
+; Report RSKM ;
+---------------
+No dedicated SERDES Receiver circuitry present in device or used in design
+
+
++------------------------------------------------+
+; Unconstrained Paths                            ;
++---------------------------------+-------+------+
+; Property                        ; Setup ; Hold ;
++---------------------------------+-------+------+
+; Illegal Clocks                  ; 0     ; 0    ;
+; Unconstrained Clocks            ; 0     ; 0    ;
+; Unconstrained Input Ports       ; 24    ; 24   ;
+; Unconstrained Input Port Paths  ; 93    ; 93   ;
+; Unconstrained Output Ports      ; 20    ; 20   ;
+; Unconstrained Output Port Paths ; 115   ; 115  ;
++---------------------------------+-------+------+
+
+
++------------------------------------+
+; TimeQuest Timing Analyzer Messages ;
++------------------------------------+
+Warning (125092): Tcl Script File lpm_constant1.qip not found
+    Info (125063): set_global_assignment -name QIP_FILE lpm_constant1.qip
+Warning (125092): Tcl Script File lpm_constant2.qip not found
+    Info (125063): set_global_assignment -name QIP_FILE lpm_constant2.qip
+Warning (125092): Tcl Script File lpm_constant3.qip not found
+    Info (125063): set_global_assignment -name QIP_FILE lpm_constant3.qip
+Warning (125092): Tcl Script File lpm_compare0.qip not found
+    Info (125063): set_global_assignment -name QIP_FILE lpm_compare0.qip
+Info: *******************************************************************
+Info: Running Quartus II 64-Bit TimeQuest Timing Analyzer
+    Info: Version 13.0.1 Build 232 06/12/2013 Service Pack 1 SJ Web Edition
+    Info: Processing started: Fri May 07 06:29:39 2021
+Info: Command: quartus_sta WildFDDX -c WildFDDX
+Info: qsta_default_script.tcl version: #1
+Info (20030): Parallel compilation is enabled and will use 16 of the 16 processors detected
+Info (306004): Started post-fitting delay annotation
+Info (306005): Delay annotation completed successfully
+Warning (335095): TimeQuest Timing Analyzer does not support the analysis of latches as synchronous elements for the currently selected device family.
+Critical Warning (332012): Synopsys Design Constraints File file not found: 'WildFDDX.sdc'. A Synopsys Design Constraints File is required by the TimeQuest Timing Analyzer to get proper timing constraints. Without it, the Compiler will not properly optimize the design.
+Info (332142): No user constrained base clocks found in the design. Calling "derive_clocks -period 1.0"
+Info (332105): Deriving Clocks
+    Info (332105): create_clock -period 1.000 -name CPALE CPALE
+    Info (332105): create_clock -period 1.000 -name VGCS VGCS
+Warning (332125): Found combinational loop of 2 nodes
+    Warning (332126): Node "inst10|inst20~6|dataout"
+    Warning (332126): Node "inst10|inst20~6|[1]"
+Warning (332125): Found combinational loop of 2 nodes
+    Warning (332126): Node "inst12|inst20~6|dataout"
+    Warning (332126): Node "inst12|inst20~6|[1]"
+Warning (332125): Found combinational loop of 2 nodes
+    Warning (332126): Node "inst11|inst20~6|dataout"
+    Warning (332126): Node "inst11|inst20~6|[1]"
+Warning (332125): Found combinational loop of 2 nodes
+    Warning (332126): Node "inst10|inst21~6|dataout"
+    Warning (332126): Node "inst10|inst21~6|[1]"
+Warning (332125): Found combinational loop of 2 nodes
+    Warning (332126): Node "inst12|inst21~6|dataout"
+    Warning (332126): Node "inst12|inst21~6|[1]"
+Warning (332125): Found combinational loop of 2 nodes
+    Warning (332126): Node "inst11|inst21~6|dataout"
+    Warning (332126): Node "inst11|inst21~6|[1]"
+Warning (332125): Found combinational loop of 2 nodes
+    Warning (332126): Node "inst12|inst22~6|dataout"
+    Warning (332126): Node "inst12|inst22~6|[1]"
+Warning (332125): Found combinational loop of 2 nodes
+    Warning (332126): Node "inst11|inst22~6|dataout"
+    Warning (332126): Node "inst11|inst22~6|[1]"
+Warning (332125): Found combinational loop of 2 nodes
+    Warning (332126): Node "inst12|inst23~6|dataout"
+    Warning (332126): Node "inst12|inst23~6|[1]"
+Warning (332125): Found combinational loop of 2 nodes
+    Warning (332126): Node "inst11|inst23~6|dataout"
+    Warning (332126): Node "inst11|inst23~6|[1]"
+Warning (332125): Found combinational loop of 2 nodes
+    Warning (332126): Node "inst12|inst24~6|dataout"
+    Warning (332126): Node "inst12|inst24~6|[1]"
+Warning (332125): Found combinational loop of 2 nodes
+    Warning (332126): Node "inst10|inst18~6|dataout"
+    Warning (332126): Node "inst10|inst18~6|[1]"
+Warning (332125): Found combinational loop of 2 nodes
+    Warning (332126): Node "inst12|inst18~6|dataout"
+    Warning (332126): Node "inst12|inst18~6|[1]"
+Warning (332125): Found combinational loop of 2 nodes
+    Warning (332126): Node "inst11|inst18~6|dataout"
+    Warning (332126): Node "inst11|inst18~6|[1]"
+Warning (332125): Found combinational loop of 2 nodes
+    Warning (332126): Node "inst10|inst17~6|dataout"
+    Warning (332126): Node "inst10|inst17~6|[1]"
+Warning (332125): Found combinational loop of 2 nodes
+    Warning (332126): Node "inst12|inst17~6|dataout"
+    Warning (332126): Node "inst12|inst17~6|[1]"
+Warning (332125): Found combinational loop of 2 nodes
+    Warning (332126): Node "inst11|inst17~6|dataout"
+    Warning (332126): Node "inst11|inst17~6|[1]"
+Warning (332125): Found combinational loop of 2 nodes
+    Warning (332126): Node "inst10|inst19~6|dataout"
+    Warning (332126): Node "inst10|inst19~6|[1]"
+Warning (332125): Found combinational loop of 2 nodes
+    Warning (332126): Node "inst12|inst19~6|dataout"
+    Warning (332126): Node "inst12|inst19~6|[1]"
+Warning (332125): Found combinational loop of 2 nodes
+    Warning (332126): Node "inst11|inst19~6|dataout"
+    Warning (332126): Node "inst11|inst19~6|[1]"
+Info (332122): write_sdc -pt
+Info: Found TIMEQUEST_REPORT_SCRIPT_INCLUDE_DEFAULT_ANALYSIS = ON
+Info (332140): No fmax paths to report
+Info (332140): No Setup paths to report
+Info (332140): No Hold paths to report
+Critical Warning (332148): Timing requirements not met
+Info (332146): Worst-case recovery slack is -6.600
+    Info (332119):     Slack End Point TNS Clock 
+    Info (332119): ========= ============= =====================
+    Info (332119):    -6.600       -71.100 VGCS 
+Info (332146): Worst-case removal slack is -4.100
+    Info (332119):     Slack End Point TNS Clock 
+    Info (332119): ========= ============= =====================
+    Info (332119):    -4.100        -4.100 VGCS 
+Info (332146): Worst-case minimum pulse width slack is -10.500
+    Info (332119):     Slack End Point TNS Clock 
+    Info (332119): ========= ============= =====================
+    Info (332119):   -10.500      -112.000 VGCS 
+    Info (332119):    -3.500       -21.000 CPALE 
+Info (332001): The selected device family is not supported by the report_metastability command.
+Info (332102): Design is not fully constrained for setup requirements
+Info (332102): Design is not fully constrained for hold requirements
+Info: Quartus II 64-Bit TimeQuest Timing Analyzer was successful. 0 errors, 67 warnings
+    Info: Peak virtual memory: 390 megabytes
+    Info: Processing ended: Fri May 07 06:29:39 2021
+    Info: Elapsed time: 00:00:00
+    Info: Total CPU time (on all processors): 00:00:00
+
+

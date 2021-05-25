@@ -1,0 +1,9 @@
+Fitter Status : Successful - Fri May 07 06:29:37 2021
+Quartus II 64-Bit Version : 13.0.1 Build 232 06/12/2013 SP 1 SJ Web Edition
+Revision Name : WildFDDX
+Top-level Entity Name : WildFDDX
+Family : MAX3000A
+Device : EPM3064ATC44-10
+Timing Models : Final
+Total macrocells : 59 / 64 ( 92 % )
+Total pins : 34 / 34 ( 100 % )

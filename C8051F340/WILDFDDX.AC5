@@ -1,0 +1,4510 @@
+
+
+        EQU $ASAM.PASS.ERROR=2
+
+        Include '51F340.inc'
+        Include "?\INTEL51\intel.inc"
+        Include "?\INTEL51\intutil.inc"
+        Include "?\INTEL51\util.inc"
+        Include "?\INTEL51\muldiv.inc"
+        Include "?\INTEL51\waittmr.inc"
+
+        Include "?\INTEL51\Lib51Serial.INC"
+
+;---[MACROS]------------------------------------------------------------------
+; EXEC MACROS FOR AUTO JUMP/CALL
+;-----------------------------------------------------------------------------
+        Include "?\INTEL51\exec.inc"
+
+;-----------------------------------------------------------------------------
+
+SYSCLK_FREQ             EQU 48000000
+SYSCLK_FREQ_PCA         EQU SYSCLK_FREQ/12
+
+;;;;;;;;;;;;;;
+;
+;010011100100111001001110
+;1221
+;4E = 01001110B
+;122121121
+;Data:          0 0 0 1 1 0 1 1 ...
+;FM encoded:   10101011111011111...
+;MFM clock:    ? 1 1 0 0 0 0 0 0...
+;MFM encoded:  ?0101001010001010...
+;                1 1  2 1   3 1
+;
+;;;;;;;;;;;;;;
+;-----------------------------------------------------------------------------
+; The type 1 commands are restore, seek, step, step-in and step-out.
+;Each of the Type 1 Commands contains a rate fiels (r0r1),
+;which determines the stepping motor rate as defined in Table 2
+;-----------------------------------------------------------------------------
+;CLK:   2MHz   2MHz   1MHz   1MHz   2MHz   1MHz
+;DDEN:   0      1      0      1      X      X
+;r1r0 TEST=1 TEST=1 TEST=1 TEST=1 TEST=0 TEST=0
+;0 0   3 ms   3 ms   6 ms   6 ms  184 us 368 us
+;0 1   6 ms   6 ms  12 ms  12 ms  190 us 380 us
+;1 0  10 ms  10 ms  20 ms  20 ms  198 us 396 us
+;1 1  15 ms  15 ms  30 ms  30 ms  208 us 416 us
+;-----------------------------------------------------------------------------
+;CPRINT
+;    (1-WRITE,0-READ)
+;A10   W  INT
+; 00   1   +  CMD
+; 01   1   -  TKR
+; 10   1   -  SEC
+; 11   1
+;-----------------------------------------------------------------------------
+;
+;
+;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; EMI MEMORY ADDRESSING
+;  EMI0CN = 010H
+;  MOVX R0,A
+;             RD      WR
+;   R0 = 0  VLADTA  VLADTA
+;        1  STATUS  STATUS
+;        2  STATUS  STATUS
+;        3  CPSYS   CPSYS
+;
+; CPSYS.0 R  - TENC[0]
+; CPSYS.1 R  - CPRINT
+; CPSYS.2 R  - VGF_READY
+; CPSYS.3 R  - VLASYS[2] - 0-READ 1-WRITE
+; CPSYS.4 R  - VLASYS[0] - VGA0
+; CPSYS.5 R  - VLASYS[1] - VGA1
+; CPSYS.6 RW - VGDRQ
+; CPSYS.7 RW - VGINTRQ
+;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+;STATUS
+;  0 Busy
+;  1 DRQ
+;  2 LostData
+;  3 CRCError
+;  4 RecNotFound
+;  5 WriteFault
+;  6 WriteProtect
+;  7 NotReady
+;  8 INTRQ
+;  9 HeadLoaded
+; 10 RecordType
+; 11 SeekError
+; 12 TrackZerro
+; 13 Index
+; 14
+; 15
+
+
+;-----------------------------------------------------------------------------
+;
+; Init Include From Config Wizard
+;
+;-----------------------------------------------------------------------------
+        .$INCLUDE ()
+        ..
+
+        .PUBLIC
+        ..
+
+        .INIT SEGMENT
+        ..
+
+        .RSEG
+        ..
+
+;-----------------------------------------------------------------------------
+;  MEMORY PAGE
+;00H SERIAL FIFO IN
+;01H SERIAL FIFO OUT
+;02H
+;03H
+;04H
+;05H
+;06H
+;07H
+;08H
+;09H
+;0AH
+;0BH FIFO TRACK BUFFER USED FOR WRITE TRACK AND WRITE SECTOR LOW
+;0CH FIFO TRACK BUFFER USED FOR WRITE TRACK AND WRITE SECTOR HIGH
+;0DH FIFO PCA MFM
+;0EH
+;0FH FIFO CPR BUSIO     = DPTR-POINTER
+;10H CPRSYSTEM MOVX @R0,A NOT SWITCH PAGE
+;-----------------------------------------------------------------------------
+;  PSW R0..R7 PAGE
+;xxx00xxxB - INTERRUPT SERIAL
+;xxx01xxxB - PCA
+;xxx10xxxB - MAIN WORK
+;xxx11xxxB - INTERRUPT CPR
+;
+;-----------------------------------------------------------------------------
+
+MPAG_SERIAL_FIFO_IN     EQU 00H
+MPAG_SERIAL_FIFO_OUT    EQU 01H
+MPAG_TRK_FIFO_LO        EQU 0BH
+MPAG_TRK_FIFO_HI        EQU 0CH
+MPAG_PCA_MFM            EQU 0DH
+MPAG_CPR_FIFO_BUS0      EQU 0EH
+MPAG_CPR_FIFO_BUS1      EQU 0FH
+MPAG_CPR_XRAM           EQU 10H
+
+
+
+MPSW_SERIAL             EQU 00000000B
+MPSW_PCA                EQU 00001000B
+MPSW_WORK               EQU 00010000B
+MPSW_CPR                EQU 00011000B
+
+PCA_MFM_WR              EQU MPSW_PCA+0  ;R0
+PCA_MFM_RD              EQU MPSW_PCA+1  ;R1
+PCACNT                  EQU MPSW_PCA+2  ;R2R3
+                                        ;R5 - NOT USE !!!
+PCA0_MODE               EQU MPSW_PCA+4  ;R4
+PCA0_LATCH              EQU MPSW_PCA+6  ;R6
+                                        ;R7 - NOT USE !!!
+
+CPR_FIFO_WR             EQU MPSW_CPR+1  ;R1
+CPR_FIFO_RD             EQU MPSW_CPR+2  ;R2
+
+
+;--------------------------
+;Config For GPIO
+;--------------------------
+MRTS        BIT P0.2        ;O
+MCTS        BIT P0.3        ;O
+VGF_INDEX   BIT P0.0        ;I
+VGF_STEP    BIT P0.6        ;O    HEAD STEP      0 - OFF      1 - ONE STEP
+VGF_DIRC    BIT P0.7        ;O    HEAD DIRECTION 0 - TRK0     1 - TRK80
+VGF_EARLY   BIT P1.0        ;O
+VGF_LATE    BIT P1.1        ;O
+VGF_HLT     BIT P2.7        ;I
+VGF_HLD     BIT P3.0        ;O    MOTOR            0 - OFF      1 - ON
+VGF_TG43    BIT P3.1        ;O
+VGF_WG      BIT P3.2        ;O    WRITE GATE       0 - DISABLE  1 - ENABLE
+VGF_WD      BIT P3.3        ;O    WRITE POOL DATA  0 - OFF 1-POOL 150 NANOSEC
+VGF_WF      BIT P3.4        ;IO
+VGDDEN      BIT P3.5        ;I
+VGF_WPRT    BIT P3.6        ;I
+VGF_TR00    BIT P3.7        ;I
+VGRES       BIT P1.2        ;I
+
+CPRINT      BIT P0.1
+CPAD        DATA P4
+
+
+            DEFDB VG_CMD
+            DEFD VG_CST
+            DEFD VG_CCN
+            DEFD VG_CDS
+            DEFD VG_TRK
+            DEFD VG_SEC
+            DEFD VG_DTA
+
+
+
+
+;--------------------------
+;Config For VG Command
+;--------------------------
+VG_CMD.r0            BIT VG_CMD.0   ;TYPE I
+VG_CMD.r1            BIT VG_CMD.1   ;TYPE I
+VG_CMD.V             BIT VG_CMD.2   ;TYPE I
+VG_CMD.h             BIT VG_CMD.3   ;TYPE I
+VG_CMD.u             BIT VG_CMD.4   ;TYPE I
+VG_CMD.m             BIT VG_CMD.4   ;TYPE II
+VG_CMD.F1            BIT VG_CMD.1   ;TYPE II
+VG_CMD.F2            BIT VG_CMD.3   ;TYPE II,III
+VG_CMD.E             BIT VG_CMD.2
+VG_CMD.STATETYPE     BIT VG_CMD.7   ;STATUS TYPE
+
+;--------------------------
+;Config CPR Memory
+;--------------------------
+
+
+CPRMEM_STATUS   EQU 0
+CPRMEM_TRK      EQU 1
+CPRMEM_SEC      EQU 2
+CPRMEM_VLADTA   EQU 3
+CPRMEM_CPSYX    EQU 4   ;READ SET SYS.CPRINT
+CPRMEM_CPSYS    EQU 5
+
+
+        .CPSYS_STRUCTURE û
+@.0.[0]        BIT @.0.0
+@.0.CPRINT     BIT @.0.1
+@.0.VGF_READY  BIT @.0.2
+@.0.WR         BIT @.0.3    ;1 = BUS WRITE
+@.0.A0         BIT @.0.4
+@.0.A1         BIT @.0.5
+@.0.DRQ        BIT @.0.6
+@.0.INTRQ      BIT @.0.7
+        ..
+
+        DEFDB CPSYS
+        CPSYS_STRUCTURE CPSYS
+        DEFDB CPSYT
+        CPSYS_STRUCTURE CPSYT
+
+
+
+;--------------------------
+;Config For STATUS
+;--------------------------
+
+        DEFD STSEND
+        DEFDB ST
+ST.Busy          BIT ST.0
+ST.DRQ           BIT ST.1
+ST.LostData      BIT ST.2
+ST.CRCError      BIT ST.3
+ST.RecNotFound   BIT ST.4
+ST.WriteFault    BIT ST.5
+ST.WriteProtect  BIT ST.6
+ST.NotReady      BIT ST.7
+        DEFDB STT
+STT.EnBreak      BIT STT.0        ; STT.INTRQ        BIT STT.0
+STT.Index        BIT STT.1
+STT.TrackZerro   BIT STT.2
+STT.RecordType   BIT STT.3
+STT.SeekError    BIT STT.4
+STT.HeadLoaded   BIT STT.5
+STT.DoBreak      BIT STT.6
+STT.DoStep       BIT STT.7
+
+
+
+        DEFB STX.UPCMD
+        DEFB STX.UPTRK
+        DEFB STX.UPSEC
+        DEFB STX.UPDTA
+        DEFB STX.INDEX_UPDATE   ;1-IF INDEX CHANGED
+        DEFB STX.INDEX_STRAT    ;1-IF INDEX FALL DOWN
+        DEFB STX.INDEX_VALUE    ;COPY FROM INDEX
+        DEFB STX.READSTREAM
+        DEFD STRMCNT.W
+
+        DEFB STT.EndStep
+
+
+
+;--------------------------
+;Start Of Code
+;--------------------------
+
+        ORG 0
+        JMP START
+
+        ORG 003H
+        JMP INT0INT
+;
+        ORG 013H
+        JMP INT1INT
+;
+;        ORG 00BH
+;        JMP Timer0INT
+;
+;        ORG 01BH
+;        JMP Timer1INT
+;
+        ORG 023H
+        JMP Lib51SerialInterrupt
+
+        ORG 033H
+        JMP SPI0INT
+
+        ORG 05BH
+        JMP PCAINT
+;
+;        ORG 073H
+;        JMP Timer3INT
+;
+;        ORG 100H
+
+;-----------------------------------------------------------------------------
+; Init Device Procedures
+;-----------------------------------------------------------------------------
+        Include "ConfigWizard\untitled.asm"
+
+
+START:  MOV SP,#SPMAX
+        ANL PCA0MD,#0BFH
+        MOV PCA0MD,#000H
+
+        CALL InitPins   ;For Protection Setup Randoms !!!
+
+        CALL Init_Device
+        CALL InitPages
+        CALL Lib51SerialInit
+        CALL PCA_MFM_STOP
+        CALL PCA_ENMFM_STOP
+
+        SETB EA
+
+        CALL InitRegs
+
+RESET_LOOP:
+        CLR EA
+        MOV SP,#SPMAX
+        CLR  VGF_HLD
+        CLR MCTS
+        CLR MRTS
+        SETB EA
+
+;        JMP $
+;MMM
+;        CALL PoolEvent
+;        JMP MMM
+
+;START MAIN LOOP
+
+;A10
+; 01R  10R
+; 11W  11W
+; 00W  00W
+
+
+        MOV DPTR,#0
+        MOV R0,#TMRDEL0
+        CALL WaitMCS_Start
+
+        MOV R0,#TMRHLDOFF
+        CALL Wait_setZerro
+
+;        CALL WriteEN
+
+        MAC_SendSeialString "@"
+
+        ;DB 00DH,01BH,05BH,04BH,'+',0
+        ;DelayMS 100
+;        MAC_SendSeialString "Rob F. / Entire Group 2012 ...",13,10
+
+;;;        SETB CPSYS.DRQ
+;;;        SETB CPSYS.INTRQ
+;;;        CLR ST.Busy
+;;;        CALL CPR_STATE_WRITE
+;;;        CALL CPR_SYS_WRITE
+
+
+;        CALL TEST_MOVE
+
+
+M1
+
+;        JMP M1
+;        JB CPRINT,M1
+
+
+;        SETB CPSYS.DRQ
+;        SETB CPSYS.INTRQ
+;        SETB CPSYS.CPRINT
+;        CALL CPR_SYS_WRITE
+;        JMP M1
+
+;        SETB CPSYS.DRQ
+;        SETB CPSYS.INTRQ
+;        CALL CPR_SYS_WRITE
+;        JMP M1
+
+        CALL PoolCPR
+        CALL PoolBreak
+        CALL PoolEvent
+        CALL PoolFIFO
+        CALL PoolMFM
+        JMP M1
+
+        DEFD TMRDEL0.D
+        DEFD TMRHLDOFF.D
+        DEFD MFM_CCITT_CRC.W
+        DEFB MFM_SEND_DRQ              ;1-START SEND DATA FROM FIFO TO DRQ
+        DEFB MFM_SEND_DRQ_FINISH       ;1-READING FINISH
+        DEFB MFM_SEND_DRQ_CRC          ;1-SEND CRC
+        DEFB MFM_SEND_DRQ_CRC_CHECKED  ;1-IF CRC SENDED
+
+
+PoolMFM:JNB MFM_SEND_DRQ,POMFDx1
+
+        JB CPSYT.DRQ,POMFDx1
+
+POMFDx4 CALL MFM_BUF_READ;CALL MFM_BUF_SIZE
+        JC POMFDx2
+
+        JNB MFM_SEND_DRQ_FINISH,POMFDx1
+        JBC MFM_SEND_DRQ_CRC,POMFDx3
+
+        CALL POMFDxC
+        CLR MFM_SEND_DRQ
+        CLR CPSYS.DRQ
+        JMP POMFDx1
+
+POMFDx3 SETB MFM_SEND_DRQ_CRC_CHECKED;CALL POMFDxC
+        MOV A,MFM_DATA_CRC+1
+        CALL MFM_BUF_WRITE
+        MOV A,MFM_DATA_CRC+0
+        CALL MFM_BUF_WRITE
+        JMP POMFDx4
+
+POMFDx2 PUSH ACC
+        CALL CPR_DTA_WRITE
+        CALL CPR_SYS_WRITE_DRQ
+;        SETB CPSYT.DRQ
+;        SETB CPSYS.DRQ
+;        CALL CPR_SYS_WRITE
+        POP ACC
+        ;CALL SendByteHEX
+POMFDx1
+
+;00000000000000000000000000000000
+PoolSTR:
+
+        JNB STX.READSTREAM,POSTx1
+        JB CPSYT.DRQ,POSTx1
+
+POSTx3 MOV R7,#0
+POSTx5 ;JNB CPSYT.DRQ,POSTx4
+       JBC STX.UPDTA,POSTx4
+       JBC STX.INDEX_STRAT,POSTx1
+       DJNZ R7,POSTx5;JMP POSTx3
+       JMP POSTx1
+        ;JB CPSYT.DRQ,POSTx3
+POSTx4
+        MOV A,VG_DTA
+        CALL SendByteHEX
+
+
+        DECW STRMCNT
+        JNZ POSTx2
+
+;        CALL CMT_FINISH
+        CLR STX.UPDTA
+        CLR STX.READSTREAM
+
+        JMP POSTx1
+POSTx2
+        ;SETB CPSYT.DRQ
+        ;SETB CPSYS.DRQ
+        ;CALL CPR_SYS_WRITE
+        CALL CPR_SYS_WRITE_DRQ
+        JMP POSTx3
+POSTx1
+
+        RET
+
+        ;DEFD ERROR_EMUL_COUNTER
+
+POMFDxC:JB MFM_SEND_DRQ_CRC_CHECKED,POMFDx6
+        SETB MFM_SEND_DRQ_CRC_CHECKED
+        ;INC ERROR_EMUL_COUNTER
+        ;MOV A,ERROR_EMUL_COUNTER
+        ;ANL A,#00011111B
+        ;JZ POMFDx5
+        MOV A,MFM_DATA_CRC+1
+        XRL A,MFM_CCITT_CRC+1
+        JNZ POMFDx5
+        MOV A,MFM_DATA_CRC+0
+        XRL A,MFM_CCITT_CRC+0
+        JZ POMFDx6
+POMFDx5 SETB ST.CRCError
+POMFDx6 RET
+
+
+
+;-----
+
+
+PoolFIFO:
+        CLR C
+        MOV A,CPR_FIFO_WR
+        SUBB A,CPR_FIFO_RD
+
+        JZ POFIx1
+
+        MOV DPH,#MPAG_CPR_FIFO_BUS0
+        MOV DPL,CPR_FIFO_RD
+
+        MOVX A,@DPTR
+        MOV B,A
+        INC DPH
+        MOVX A,@DPTR
+
+        CALL SendVG_A10_DATA
+
+        INC CPR_FIFO_RD
+
+POFIx1
+
+        CALL ReadSize
+        JNZ POFIx02
+        JMP POFIx2
+
+POFIx02 CALL ReadByte
+        CJNE A,#'R',POFIx3
+        JMP ResetMPU
+POFIx3  CJNE A,#'r',POFIx4
+        JMP ResetMPU
+POFIx4  CJNE A,#'I',POFIx5
+        JMP SendVG_Info
+POFIx5  CJNE A,#'i',POFIx6
+        JMP SendVG_Info
+POFIx6  ;CJNE A,#'Q',POFIx7
+        ;JMP VG_READ_MFM
+POFIx7  ;CJNE A,#'q',POFIx8
+        ;JMP VG_READ_MFM
+POFIx8  CJNE A,#'0',POFIx9
+        MOV A,#0
+        JMP VG_GOTO_TRACK
+POFIx9  CJNE A,#'1',POFIx10
+        MOV A,#1
+        JMP VG_GOTO_TRACK
+POFIx10 CJNE A,#'2',POFIx11
+        MOV A,#2
+        JMP VG_GOTO_TRACK
+POFIx11 CJNE A,#'3',POFIx12
+        MOV A,#3
+        JMP VG_GOTO_TRACK
+POFIx12 CJNE A,#'4',POFIx13
+        MOV A,#4
+        JMP VG_GOTO_TRACK
+POFIx13 CJNE A,#'5',POFIx14
+        MOV A,#5
+        JMP VG_GOTO_TRACK
+POFIx14 CJNE A,#'6',POFIx15
+        MOV A,#6
+        JMP VG_GOTO_TRACK
+POFIx15 CJNE A,#'7',POFIx16
+        MOV A,#7
+        JMP VG_GOTO_TRACK
+POFIx16 CJNE A,#'8',POFIx17
+        MOV A,#8
+        JMP VG_GOTO_TRACK
+POFIx17 CJNE A,#'9',POFIx18
+        MOV A,#9
+        JMP VG_GOTO_TRACK
+POFIx18 CJNE A,#'A',POFIx19
+        JMP VG_READ_MARK
+POFIx19 CJNE A,#'a',POFIx20
+        JMP VG_READ_MARK
+POFIx20 CJNE A,#'G',POFIx21
+        JMP MFM_TEST_ENCODER
+POFIx21 CJNE A,#'g',POFIx22
+        JMP MFM_TEST_ENCODER
+POFIx22 CJNE A,#'Z',POFIx23
+        JMP MFM_TEST_FORMAT
+POFIx23 CJNE A,#'z',POFIx24
+        JMP MFM_TEST_FORMAT
+POFIx24 CJNE A,#'X',POFIx25
+        JMP MFM_TEST_WRITE_SEC_9
+POFIx25 CJNE A,#'x',POFIx26
+        JMP MFM_TEST_WRITE_SEC_9
+POFIx26
+
+
+
+
+
+        CALL WriteByte
+
+POFIx2
+
+        RET
+;------------------------
+WAIT_INDEX_START:
+        CLR STX.INDEX_STRAT
+WINASx1 JBC STX.INDEX_STRAT,WINASx2
+        JMP WINASx1
+WINASx2 RET
+;------------------------
+; IN:A=TRACK
+CREATE_FORMAT_TRACK:
+
+        MOV B,A
+        CALL TRFIF_CLEAR
+        MOV A,#1             ;SEC
+        CALL MTEFxCREATE_SEC
+        CALL MTEFxCREATE_SEC
+        CALL MTEFxCREATE_SEC
+        CALL MTEFxCREATE_SEC
+        CALL MTEFxCREATE_SEC
+        CALL MTEFxCREATE_SEC
+        CALL MTEFxCREATE_SEC
+        CALL MTEFxCREATE_SEC
+        MOV A,#2             ;SEC
+        CALL MTEFxCREATE_SEC
+        CALL MTEFxCREATE_SEC
+        CALL MTEFxCREATE_SEC
+        CALL MTEFxCREATE_SEC
+        CALL MTEFxCREATE_SEC
+        CALL MTEFxCREATE_SEC
+        CALL MTEFxCREATE_SEC
+        CALL MTEFxCREATE_SEC
+
+        RET
+; IN:A=SEC
+;    B=TRK
+MTEFxCREATE_SEC:
+
+        PUSH ACC
+        PUSH B;MOV B,VG_TRK         ;TRK
+        CALL MTEFxMFM_ADR
+        MOV A,#1             ;CREATE SECTOR
+        CALL TRFIF_WRITE
+        POP B
+        POP ACC
+        ADD A,#2
+        RET
+
+;------------------------
+MFM_TEST_FORMAT:
+
+        MAC_SendSeialString "["
+
+        SETB VGF_HLD
+
+        MOV A,VG_TRK
+        CALL CREATE_FORMAT_TRACK
+
+        CALL WAIT_INDEX_START
+
+MTEFx2  CALL WRITE_FORMAT_EMUL
+
+        MAC_SendSeialString "]"
+        CALL Start_HLD_OFF_FAST;CLR VGF_HLD
+
+
+        RET
+
+MTEFxMFM_ADR:
+
+        PUSH ACC
+        CLR A                ;CREATE ADDR
+        CALL TRFIF_WRITE
+        MOV A,B              ;TRK
+        CALL TRFIF_WRITE
+        CLR A                ;SIDE
+        CALL TRFIF_WRITE
+        POP ACC              ;SEC
+        CALL TRFIF_WRITE
+        MOV A,#1
+        CALL TRFIF_WRITE
+
+        RET
+;------------------------
+;
+;00000901 73A5=73A5
+;00000000000000000000000000000000000000000000000000000000000000000000000000000000
+;00000000000000000000000000000000000000000000000000000000000000000000000000000000
+;00000000000000000000000000000000000000000000000000000000000000000000000000000000
+;00000000000000000000000000000000000000000000000000000000000000000000000000000000
+;00000000000000000000000000000000000000000000000000000000000000000000000000000000
+;0000000000000000000000000000000000000000000000000000011600F009100000202020202020
+;20202000006120202020202020000000 A963=A963
+SEC_09_DATA:
+ DB 000H,000H,000H,000H,000H,000H,000H,000H
+ DB 000H,000H,000H,000H,000H,000H,000H,000H
+ DB 000H,000H,000H,000H,000H,000H,000H,000H
+ DB 000H,000H,000H,000H,000H,000H,000H,000H
+ DB 000H,000H,000H,000H,000H,000H,000H,000H
+ DB 000H,000H,000H,000H,000H,000H,000H,000H
+ DB 000H,000H,000H,000H,000H,000H,000H,000H
+ DB 000H,000H,000H,000H,000H,000H,000H,000H
+ DB 000H,000H,000H,000H,000H,000H,000H,000H
+ DB 000H,000H,000H,000H,000H,000H,000H,000H
+ DB 000H,000H,000H,000H,000H,000H,000H,000H
+ DB 000H,000H,000H,000H,000H,000H,000H,000H
+ DB 000H,000H,000H,000H,000H,000H,000H,000H
+ DB 000H,000H,000H,000H,000H,000H,000H,000H
+ DB 000H,000H,000H,000H,000H,000H,000H,000H
+ DB 000H,000H,000H,000H,000H,000H,000H,000H
+ DB 000H,000H,000H,000H,000H,000H,000H,000H
+ DB 000H,000H,000H,000H,000H,000H,000H,000H
+ DB 000H,000H,000H,000H,000H,000H,000H,000H
+ DB 000H,000H,000H,000H,000H,000H,000H,000H
+ DB 000H,000H,000H,000H,000H,000H,000H,000H
+ DB 000H,000H,000H,000H,000H,000H,000H,000H
+ DB 000H,000H,000H,000H,000H,000H,000H,000H
+ DB 000H,000H,000H,000H,000H,000H,000H,000H
+ DB 000H,000H,000H,000H,000H,000H,000H,000H
+ DB 000H,000H,000H,000H,000H,000H,000H,000H
+ DB 000H,000H,000H,000H,000H,000H,000H,000H
+ DB 000H,000H,000H,000H,000H,000H,000H,000H
+ DB 000H,000H,001H,016H,000H,0F0H,009H,010H
+ DB 000H,000H,020H,020H,020H,020H,020H,020H
+ DB 020H,020H,020H,000H,000H,061H,020H,020H
+ DB 020H,020H,020H,020H,020H,000H,000H,000H
+
+;
+;------------------------
+
+MFM_TEST_WRITE_SEC_9:
+
+        SETB VGF_HLD
+
+        CALL TRFIF_WRITE
+
+
+        MAC_SendSeialString "{"
+        CALL WAIT_INDEX_START
+MTW9x2  MAC_SendSeialString "#}{"
+
+        CALL TRFIF_CLEAR
+        MOV DPTR,#SEC_09_DATA
+        MOV R5,#128
+MTW9x3  CLR A
+        MOVC A,@A+DPTR
+        MOV B,A
+        INC DPTR
+        CLR A
+        MOVC A,@A+DPTR
+        INC DPTR
+        XCH A,B
+        CALL TRFIF_WRITE
+        DJNZ R5,MTW9x3
+
+        MOV A,#9
+        CALL MTW9xWRITE_SEC
+        JC MTW9x5
+        MAC_SendSeialString "ERROR"
+MTW9x5  MAC_SendSeialString "}"
+        CALL Start_HLD_OFF_FAST;CLR VGF_HLD
+        RET
+;-----------
+; IN:A=SEC
+;OUT:C=1 IF SUCESSFUL
+MTW9xFIND_SEC:
+        MOV B,A
+        MOV R5,#18
+MTW9x1  PUSH B
+        CALL MFM_BUF_CLEAR
+        MOV A,#2
+        CALL PCA_MFM_START
+        CALL PCA_MFM_WAIT_READ_DONE;PCA_MFM_WAIT_READ_START
+        CALL EXTRACT_MFM_BUF_ADDR_INFO
+        POP B
+        MOV A,MFMADDR_SEC
+        CJNE A,B,MTW9x4
+        MOV A,MFMADDR_TRK
+        CJNE A,VG_TRK,MTW9x4
+
+        CALL PCA_MFM_STOP
+        SETB C
+        RET
+MTW9x4  PUSH B
+;        MOV A,MFMADDR_TRK
+;        CALL SendByteHEX
+;        MOV A,MFMADDR_SEC
+;        CALL SendByteHEX
+;        MAC_SendSeialString " "
+;        MOV A,MFM_DATA_CRC+1
+;        CALL SendByteHEX
+;        MOV A,MFM_DATA_CRC+0
+;        CALL SendByteHEX
+;        MAC_SendSeialString "="
+;        MOV A,MFM_CCITT_CRC+1
+;        CALL SendByteHEX
+;        MOV A,MFM_CCITT_CRC+0
+;        CALL SendByteHEX
+;        MAC_SendSeialString "*"
+        POP B
+        DJNZ R5,MTW9x1
+
+        CALL PCA_MFM_STOP
+        CLR C
+
+        RET
+        
+; IN:A=SEC
+;OUT:C=1 IF SUCESSFUL
+MTW9xWRITE_SEC:
+        CALL MTW9xFIND_SEC
+        JNC MTW9x6
+        CALL WRITE_SECTOR_EMUL
+        SETB C
+MTW9x6  RET
+
+
+;------------------------
+MFM_TEST_ENCODER:
+
+;        SETB VGF_HLD
+
+        MAC_SendSeialString ">"
+
+        MOV A,SP
+        CALL SendByteHEX
+        MAC_SendSeialString ">"
+
+
+;        CALL WriteWaitFlush
+;         CALL PCA_MFM_STOP
+;         CLR EX0
+
+        SETB MCTS
+
+        CALL PCA_ENMFM_START
+        MOV A,#3
+        ADD A,EOXMFMCNTA1
+        MOV EOXMFMCNTA1,A
+
+        MOV A,#000H
+        CALL PCA_ENMFM_ADD_BYTE
+        MOV A,#0A1H
+        CALL PCA_ENMFM_ADD_BYTE
+        MOV A,#0A1H
+        CALL PCA_ENMFM_ADD_BYTE
+        MOV A,#0A1H
+        CALL PCA_ENMFM_ADD_BYTE
+        MOV A,#0FBH
+        CALL PCA_ENMFM_ADD_BYTE
+        MOV A,#062H
+        CALL PCA_ENMFM_ADD_BYTE
+        MOV A,#06FH
+        CALL PCA_ENMFM_ADD_BYTE
+        MOV A,#06FH
+        CALL PCA_ENMFM_ADD_BYTE
+        MOV A,#074H
+        CALL PCA_ENMFM_ADD_BYTE
+        MOV A,#020H
+        CALL PCA_ENMFM_ADD_BYTE
+        MOV A,#020H
+        CALL PCA_ENMFM_ADD_BYTE
+        MOV A,#020H
+        CALL PCA_ENMFM_ADD_BYTE
+        MOV A,#020H
+        CALL PCA_ENMFM_ADD_BYTE
+        MOV A,#020H
+        CALL PCA_ENMFM_ADD_BYTE
+
+;111111123232132321323211111313121222131113131113113211221111122111112211111221111122111
+;111111123232132321323211111313121222131113131113113211221111122111112211111221111122111
+        CALL PCA_ENMFM_WAIT_FINISH
+
+
+        CALL PCA_ENMFM_STOP
+        CLR MCTS
+
+;         SETB EX0
+
+        CALL MFTSEx4
+
+        MAC_SendSeialString "<"
+        CALL WriteEN
+
+        RET
+
+
+
+        CLR MRTS
+        CLR MCTS
+
+
+;        CALL WriteEN
+        MAC_SendSeialString ">"
+
+
+        PUSH EMI0CN
+        PUSH PSW
+
+        MOV PSW,#MPSW_PCA
+        MOV EMI0CN,#MPAG_PCA_MFM
+;        MOV R0,PCA_MFM_WR
+;        MOVX @R0,A
+;        INC PCA_MFM_WR
+
+        SETB MCTS
+        MOV A,#3
+        CALL MFM_ENCODE_START
+        MOV A,#000H
+        CALL MFM_ENCODE_BYTE
+        MOV A,#0A1H
+        CALL MFM_ENCODE_BYTE
+        MOV A,#0A1H
+        CALL MFM_ENCODE_BYTE
+        MOV A,#0A1H
+        CALL MFM_ENCODE_BYTE
+        MOV A,#0FBH
+        CALL MFM_ENCODE_BYTE
+        MOV A,#062H
+        CALL MFM_ENCODE_BYTE
+        MOV A,#06FH
+        CALL MFM_ENCODE_BYTE
+        MOV A,#06FH
+        CALL MFM_ENCODE_BYTE
+        MOV A,#074H
+        CALL MFM_ENCODE_BYTE
+        MOV A,#020H
+        CALL MFM_ENCODE_BYTE
+        CALL SPI_POOL_START
+        MOV A,#020H
+        CALL MFM_ENCODE_BYTE
+        MOV A,#020H
+        CALL MFM_ENCODE_BYTE
+        MOV A,#020H
+        CALL MFM_ENCODE_BYTE
+        MOV A,#020H
+        CALL MFM_ENCODE_BYTE
+        MOV R5,#20
+MMMM
+        MOV A,#055H
+        CALL MFM_ENCODE_BYTE
+        DJNZ R5,MMMM
+        CALL MFM_ENCODE_END
+
+        POP PSW
+        POP EMI0CN
+
+        CLR MCTS
+
+
+MFTSEx3 CALL SPI_POOL_BUSY
+        JC MFTSEx3
+
+;;;        CALL MFTSEx1
+
+        MAC_SendSeialString "<"
+
+        RET
+
+;111111123232132321323211111313121222131113131113113211221111122111112211111221111122111
+;111111123232132321323211111313121222131113131113113211221111122111112211111221111122111
+;11111112323213232132321111131312122213111313111311321122111112211111221111122111
+MFTSEx1 CALL MFM_BUF_READ
+        JNC MFTSEx2
+        CALL MFTSEx0
+        CALL MFTSEx0
+        CALL MFTSEx0
+        CALL MFTSEx0
+        JMP MFTSEx1
+MFTSEx2 CALL WriteEN
+        RET
+
+
+MFTSEx0:PUSH ACC
+        ANL A,#3
+        ADD A,#48
+        CALL WriteByte
+        POP ACC
+        RR A
+        RR A
+        RET
+
+MFTSEx4:CALL MFM_BUF_READ
+        JNC MFTSEx5
+        ADD A,#'0'
+        CALL WriteByte
+        ;CALL SendByteHEX
+        JMP MFTSEx4
+MFTSEx5 RET
+
+
+;------------------------
+        .MAC_CRC_CCITT_STEP
+         XRL A,MFM_CCITT_CRC+1
+         MOV MFM_CCITT_CRC+1,A
+         MOV DPTR,#CRC_TBL_CCITT
+         MOVC A,@A+DPTR
+         XRL A,MFM_CCITT_CRC+0
+         XCH A,MFM_CCITT_CRC+1
+         INC DPH
+         MOVC A,@A+DPTR
+         MOV MFM_CCITT_CRC+0,A
+        ..
+;------------------------
+
+        DEFD TRFIF_WR
+        DEFD TRFIF_RD
+
+TRFIF_CLEAR:
+        MOV TRFIF_RD,TRFIF_WR
+        RET
+
+TRFIF_SIZE:
+        MOV A,TRFIF_WR
+        CLR C
+        SUBB A,TRFIF_RD
+        RET
+
+; IN:A=DATA_LO, B=DATA_HI
+TRFIF_WRITE:
+        PUSH DPTR
+        MOV DPH,#MPAG_TRK_FIFO_LO
+        MOV DPL,TRFIF_WR
+        MOVX @DPTR,A
+        INC DPH
+        XCH A,B
+        MOVX @DPTR,A
+        XCH A,B
+        INC TRFIF_WR
+        POP DPTR
+        RET
+
+;OUT:CF=1, A=DATA_LO, B=DATA_HI
+TRFIF_READ:
+        CALL TRFIF_SIZE
+        CLR C
+        JZ TRFIRx1
+        PUSH DPTR
+        MOV DPH,#MPAG_TRK_FIFO_HI
+        MOV DPL,TRFIF_RD
+        MOVX A,@DPTR
+        MOV B,A
+        DEC DPH
+        MOVX A,@DPTR
+        INC TRFIF_RD
+        POP DPTR
+        SETB C
+TRFIRx1 RET
+
+
+TRFIF_SHOW:
+        CALL TRFIF_READ
+        JNC TRFIRx2
+;        PUSH B
+        CALL SendByteHEX
+;        POP ACC
+;        CALL SendByteHEX
+        JMP TRFIF_SHOW
+TRFIRx2 RET
+
+
+;------------------------
+
+MFM_BUF_CLEAR:
+        CLR EA
+        MOV PCA_MFM_RD,PCA_MFM_WR
+        SETB EA
+        RET
+
+MFM_BUF_SIZE:
+        MOV A,PCA_MFM_WR
+        CLR C
+        SUBB A,PCA_MFM_RD
+        RET
+
+;OUT:CF=1, A=DATA
+MFM_BUF_READ:
+        CALL MFM_BUF_SIZE
+        CLR C
+        JZ MFBURx1
+        PUSH EMI0CN
+        MOV EMI0CN,#MPAG_PCA_MFM
+        MOV R0,PCA_MFM_RD
+        MOVX A,@R0
+        INC PCA_MFM_RD
+        CALL CRC_CCITT_STEP
+        POP EMI0CN
+        SETB C
+MFBURx1 RET
+
+; IN:A=BYTE
+MFM_BUF_WRITE:
+        PUSH EMI0CN
+        MOV EMI0CN,#MPAG_PCA_MFM
+        MOV R0,PCA_MFM_WR
+        MOVX @R0,A
+        INC PCA_MFM_WR
+        POP EMI0CN
+        RET
+
+
+;------------------------
+
+
+VG_READ_MARK:
+        CALL WriteEN
+        MAC_SendSeialString "#"
+
+        SETB VGF_HLD
+
+        JB VGF_INDEX,$
+        MAC_SendSeialString "#"
+
+;        MOV A,#1
+;        CALL PCA_MFM_START
+;        CALL PCA_MFM_WAIT_READ_DONE
+
+        MAC_SendSeialString "INDEX#"
+
+        CALL WriteEN
+
+        MOV R7,#16
+VGRMAx1 PUSH R7
+
+        MOV A,#2
+        CALL PCA_MFM_START
+        CALL PCA_MFM_WAIT_READ_DONE;PCA_MFM_WAIT_READ_START
+        CALL VGRMAx0
+        PUSH B
+        MAC_SendSeialString " "
+        MOV A,MFM_DATA_CRC+1
+        CALL SendByteHEX
+        MOV A,MFM_DATA_CRC+0
+        CALL SendByteHEX
+        MAC_SendSeialString "="
+        MOV A,MFM_CCITT_CRC+1
+        CALL SendByteHEX
+        MOV A,MFM_CCITT_CRC+0
+        CALL SendByteHEX
+        CALL WriteEN
+;        MAC_SendSeialString "  #"
+
+        ;MOV A,#4
+        POP ACC
+        ADD A,#3
+        CALL PCA_MFM_START
+        CALL PCA_MFM_WAIT_READ_START;CALL PCA_MFM_WAIT_READ_DONE
+        CALL VGRMAx0
+        MAC_SendSeialString " "
+        MOV A,MFM_DATA_CRC+1
+        CALL SendByteHEX
+        MOV A,MFM_DATA_CRC+0
+        CALL SendByteHEX
+        MAC_SendSeialString "="
+        MOV A,MFM_CCITT_CRC+1
+        CALL SendByteHEX
+        MOV A,MFM_CCITT_CRC+0
+        CALL SendByteHEX
+        CALL WriteEN
+;        MAC_SendSeialString "  #"
+
+
+        POP R7
+        DJNZ R7,VGRMAx1
+
+
+        CALL PCA_MFM_STOP
+
+        MAC_SendSeialString "#"
+
+        CALL Start_HLD_OFF_FAST
+
+        RET
+
+;OUT:B=LAST BYTE
+VGRMAx3 JNB MFM_SYNC_DONE,VGRMAx4
+        JNB MFM_DATA_READ_DONE,VGRMAx0
+VGRMAx4 CALL MFM_BUF_READ
+        JC VGRMAx5
+        RET
+VGRMAx0:CALL MFM_BUF_READ
+        JNC VGRMAx3
+VGRMAx5 PUSH ACC
+        CALL SendByteHEX
+        POP B
+        JMP VGRMAx0
+
+;        INC DPTR
+;        MOV A,DPH
+;        ORL A,DPH
+;        JNZ VGRMAx0
+;        RET
+
+
+;------------------------
+
+VG_READ_MFM:
+
+
+        CALL WriteEN
+        MAC_SendSeialString "Q"
+
+
+        SETB VGF_HLD
+
+        JB VGF_INDEX,$
+;        JNB VGF_INDEX,$
+
+        RET
+
+        CLR EA
+        MOV PCA_MFM_WR,#0
+        MOV PCA_MFM_RD,#0
+        MOV PCA_TEMP,#00000011B
+        SETB EA
+
+
+        PUSH EMI0CN
+        MOV EMI0CN,#MPAG_PCA_MFM
+
+        MOV DPTR,#-80*20
+VGRMFx2 ;PUSH DPTR
+VGRMFx1 MOV A,PCA_MFM_WR
+        XRL A,PCA_MFM_RD
+        JZ VGRMFx1
+
+        MOV R0,PCA_MFM_RD
+        MOVX A,@R0
+        CALL WriteByte
+
+        INC PCA_MFM_RD
+
+        ;POP DPTR
+        INC DPTR
+        MOV A,DPH
+;        ORL A,DPH
+        JNZ VGRMFx2
+        MOV DPTR,#-1
+        JB VGF_INDEX,VGRMFx2
+
+
+
+
+        POP EMI0CN
+
+        MAC_SendSeialString "q"
+
+        RET
+
+SendVG_Info:
+        MAC_SendSeialString "i"
+        CALL WriteEN
+
+        MAC_SendSeialString "ST .......... "
+        MOV A,STSEND
+        CALL SendByteBIN
+        CALL WriteEN
+
+;        MAC_SendSeialString "CPSYSO0 ..... "
+;        MOV A,CPSYSO0
+;        CALL SendByteBIN
+;        CALL WriteEN
+;
+;        MAC_SendSeialString "CPSYSO1 ..... "
+;        MOV A,CPSYSO1
+;        CALL SendByteBIN
+;        CALL WriteEN
+;
+;        MAC_SendSeialString "CPSYSO2 ..... "
+;        MOV A,CPSYSO2
+;        CALL SendByteBIN
+;        CALL WriteEN
+;
+;        MAC_SendSeialString "CPSYSO3 ..... "
+;        MOV A,CPSYSO3
+;        CALL SendByteBIN
+;        CALL WriteEN
+
+        MAC_SendSeialString "CPSYS ....... "
+        MOV A,CPSYS
+        CALL SendByteBIN
+        CALL WriteEN
+
+        MAC_SendSeialString "CPSYSCH ..... "
+        MOV R0,#CPRMEM_CPSYS
+        MOVX A,@R0
+        CALL SendByteBIN
+        CALL WriteEN
+
+        MAC_SendSeialString "STX.UPCMD ... "
+        MOV A,#'0'
+        MOV C,STX.UPCMD
+        MOV ACC.0,C
+        CALL WriteByte
+        CALL WriteEN
+
+        MAC_SendSeialString "STX.UPTRK ... "
+        MOV A,#'0'
+        MOV C,STX.UPTRK
+        MOV ACC.0,C
+        CALL WriteByte
+        CALL WriteEN
+
+        MAC_SendSeialString "STX.UPSEC ... "
+        MOV A,#'0'
+        MOV C,STX.UPSEC
+        MOV ACC.0,C
+        CALL WriteByte
+        CALL WriteEN
+
+        MAC_SendSeialString "STX.UPDTA ... "
+        MOV A,#'0'
+        MOV C,STX.UPDTA
+        MOV ACC.0,C
+        CALL WriteByte
+        CALL WriteEN
+
+        RET
+
+
+
+;PoolSTEP:
+;        MOV R0,#TMRDEL0
+;        CALL Wait_Check
+;        JNC POADx1
+;
+;        MOV DPTR,#100
+;        MOV R0,#TMRDEL0
+;        CALL WaitMS_Start
+;
+;        CPL VGF_STEP
+;
+;POADx1
+;
+;        RET
+
+
+VG_GOTO_TRACK:
+        MOV VG_DTA,A
+        MOV VG_CMD,#00011000B
+        CALL PO_START_DO_CMD
+        CALL CPR_STATE_WRITE
+        RET
+
+
+TEST_MOVE:
+        MOV VG_TRK,#192
+        MOV VG_DTA,#0
+        MOV VG_CMD,#00011000B
+        CALL PO_START_DO_CMD
+        CALL CPR_STATE_WRITE
+        CALL TEMOx0
+;111111111111111
+;        MOV VG_TRK,#0
+;        MOV VG_DTA,#0
+;        MOV VG_CMD,#00011000B
+;        CALL PO_START_DO_CMD
+;        CALL CPR_STATE_WRITE
+;        CALL TEMOx0
+
+        RET
+
+
+TEMOx0: CALL PoolCPR
+        JB ST.Busy,TEMOx0
+        RET
+
+;        DEFD CPSYSO0
+;        DEFD CPSYSO1
+;        DEFD CPSYSO2
+;        DEFD CPSYSO3
+
+;-------------------------
+; CPR PROCEDURES
+;-------------------------
+;CF = DRQ
+CPR_SYS_READ:
+;        MOV A,CPAD
+;        MOV C,ACC.7
+;        MOV CPSYS.DRQ,C
+
+        MOV C,CPSYS.CPRINT
+        JC CPSYUx1
+;        MOV CPSYSO0,CPSYSO1
+;        MOV CPSYSO1,CPSYSO2
+;        MOV CPSYSO2,CPSYSO3
+;        MOV CPSYSO3,CPSYS
+
+        MOV R0,#CPRMEM_CPSYS
+        MOVX A,@R0
+        MOV C,CPSYS.INTRQ
+        MOV CPSYS,A
+        MOV CPSYS.INTRQ,C
+;        XCH A,CPSYS
+;        MOV C,ACC.7
+;        MOV CPSYS.7,C
+;        MOV C,ACC.6
+;        MOV CPSYS.6,C
+        SETB CPSYS.CPRINT
+CPSYUx1 RET
+
+
+CPR_SYS_WRITE_DRQ:
+        SETB CPSYT.DRQ
+        SETB CPSYS.DRQ
+CPR_SYS_WRITE:
+        MOV R0,#CPRMEM_CPSYS
+        MOV A,CPSYS
+;        SETB ACC.7
+        MOVX @R0,A
+        RET
+
+CPR_SYS_WRITE_DRQ_SAFE:
+        PUSH PSW
+        PUSH EMI0CN
+        MOV PSW,#MPSW_WORK
+        MOV EMI0CN,#MPAG_CPR_XRAM
+        CALL CPR_SYS_WRITE_DRQ
+        POP EMI0CN
+        POP PSW
+        RET
+
+CPR_TRK_WRITE:
+        MOV R0,#CPRMEM_TRK
+        MOVX @R0,A
+        RET
+
+CPR_SEC_WRITE:
+        MOV R0,#CPRMEM_SEC
+        MOVX @R0,A
+        RET
+
+
+
+
+CPR_DTA_READ:
+        MOV R0,#CPRMEM_VLADTA
+        MOVX A,@R0
+        RET
+
+CPR_DTA_WRITE:
+        MOV R0,#CPRMEM_VLADTA
+        MOVX @R0,A
+        RET
+
+        ;DEFD STATE_LAST_SEND
+
+CPR_STATE_WRITE:
+
+        MOV R0,#CPRMEM_STATUS
+
+                                 ;BIT 7 NotReady
+        MOV C,VGF_WPRT           ;BIT 6
+        CPL C                    ;BIT 6
+        MOV ST.WriteProtect,C    ;BIT 6
+                                 ;BIT 3 CRCError
+                                 ;BIT 0 Busy
+        MOV A,ST
+        JB VG_CMD.STATETYPE,CPSTWx1
+        MOV C,VGF_HLD            ;BIT 5
+;        ANL C,VGF_HLT            ;BIT 5
+        MOV STT.HeadLoaded,C     ;BIT 5
+        MOV ACC.5,C              ;BIT 5
+        MOV C,STT.SeekError      ;BIT 4
+        MOV ACC.4,C              ;BIT 4
+        MOV C,VGF_TR00           ;BIT 2
+        CPL C                    ;BIT 2
+        MOV STT.TrackZerro,C     ;BIT 2
+        MOV ACC.2,C              ;BIT 2
+        MOV C,VGF_INDEX          ;BIT 1
+        CPL C                    ;BIT 1
+        MOV STT.Index,C          ;BIT 1
+        MOV ACC.1,C              ;BIT 1
+
+
+CPSTWx2 MOV STSEND,A
+        MOVX @R0,A
+
+        RET
+
+CPSTWx1 CLR ACC.6
+        ;MOV C,ST.CRCError
+        ;MOV ACC.6,C
+
+        MOV C,STT.RecordType     ;BIT 5
+        MOV ACC.5,C              ;BIT 5
+                                 ;BIT 4 RecNotFound
+                                 ;BIT 2 LostData
+        MOV C,CPSYS.DRQ          ;BIT 1
+        MOV ACC.1,C              ;BIT 1
+
+        JMP CPSTWx2
+
+
+;-------------------------
+PoolEvent:
+
+        JBC STX.INDEX_UPDATE,POEVx2
+        ;RET
+        JB VGRES,POEVx1
+        CLR VGF_HLD
+        JNB VGRES,$
+ResetMPU:
+        CALL WriteWaitFlush
+        JMP RESET_LOOP;ORL RSTSRC,#00010000B
+;        JMP $
+
+POEVx1
+        RET
+
+POEVx2  CALL CPR_STATE_WRITE
+
+        RET
+
+
+;-------------------------
+PoolBreak:
+
+;        RET
+
+        JNB STT.DoBreak,POBRx2
+
+        JNB VGF_HLT,POBRx3
+        MOV R0,#TMRHLDOFF
+        CALL Wait_Check
+        JNC POBRx1
+        CLR  VGF_HLD
+        CALL PCA_MFM_STOP
+        CALL CMT_FINISH;X
+        CLR STT.DoBreak
+        MOV A,#')'
+        CALL WriteByte
+        RET
+
+POBRx2  JB VGF_HLT,POBRx1
+;        SETB VGF_HLT
+        MOV A,#'('
+        CALL WriteByte
+POBRx3  CALL Start_HLD_OFF_FAST
+
+POBRx1  RET
+
+
+Start_HLD_OFF_FAST:
+        MOV R0,#TMRHLDOFF
+        MOV DPTR,#50
+        CALL WaitMS_Start
+        SETB STT.DoBreak
+        RET
+
+
+Start_HLD_OFF_SLOW:
+        MOV R0,#TMRHLDOFF
+        MOV DPTR,#2500
+        CALL WaitMS_Start
+        SETB STT.DoBreak
+        RET
+
+
+PoolCPR:
+        JNB ST.Busy,POCPx2
+        MOV A,VG_CMD
+        SWAP A
+        ;ANL A,#00001111B
+        JMP EXEC_VGCMD_PROC.EXEC
+POCPx2  CALL CPR_SYS_READ
+;        JC POCPx1
+        JNB STX.UPTRK,POCPx5
+        CLR STX.UPTRK
+        CALL SendVG_TRK
+        RET
+POCPx5  JNB STX.UPSEC,POCPx6
+        CLR STX.UPSEC
+        CALL SendVG_SEC
+        RET
+POCPx6  JB STX.READSTREAM,POCPx7
+        JNB STX.UPDTA,POCPx7
+        CLR STX.UPDTA
+        CALL SendVG_DTA
+        RET
+POCPx7  JNB STX.UPCMD,POCPx4
+        CLR STX.UPCMD
+PO_START_DO_CMD:
+        MOV VG_CST,#0
+        MOV VG_CCN,#0
+        MOV VG_CDS,#0
+        CLR STT.DoBreak
+        CLR ST.CRCError
+        CLR ST.RecNotFound
+        CLR ST.NotReady
+        CLR ST.LostData
+        SETB ST.Busy
+        CLR CPSYS.INTRQ
+        CALL CPR_SYS_WRITE
+        CALL SendVG_CMD
+        RET
+POCPx4  NOP
+POCPx1  RET
+
+
+
+;POCPx3  MOV A,VG_CMD
+;        CALL INTRQ_DATA
+;        JMP POCPx3
+;        SETB CPSYS.DRQ
+;        CALL CPR_SYS_WRITE
+;        RET
+
+
+;----------------------
+SendVG_CMD:
+        PUSH ACC
+        CALL WriteEN
+        MOV A,#'C'
+        CALL WriteByte
+        MOV A,#':'
+        CALL WriteByte
+        MOV A,VG_CMD
+        CALL SendByteBIN
+;        CALL WriteWaitFlush
+        POP ACC
+        RET
+;----------------------
+SendVG_TRK:
+        PUSH ACC
+        CALL WriteEN
+        MOV A,#'T'
+        CALL WriteByte
+        MOV A,#':'
+        CALL WriteByte
+        MOV A,VG_TRK
+        CALL SendByteHEX
+        POP ACC
+        RET
+;----------------------
+SendVG_SEC:
+        PUSH ACC
+        CALL WriteEN
+        MOV A,#'S'
+        CALL WriteByte
+        MOV A,#':'
+        CALL WriteByte
+        MOV A,VG_SEC
+        CALL SendByteHEX
+        POP ACC
+        RET
+;----------------------
+SendVG_DTA:
+        PUSH ACC
+        CALL WriteEN
+        MOV A,#'D'
+        CALL WriteByte
+        MOV A,#':'
+        CALL WriteByte
+        MOV A,VG_DTA
+        CALL SendByteHEX
+        POP ACC
+        RET
+
+;B = A10
+;A = DATA
+SendVG_A10_DATA:
+        PUSH ACC
+        PUSH B
+        CALL WriteEN
+        MOV A,#'R'
+        JNB B.3,SEVGAx1
+        MOV A,#'W'
+SEVGAx1 CALL WriteByte
+        POP ACC
+        SWAP A
+        PUSH ACC
+        ANL A,#00000010B
+        RR A
+        ORL A,#'0'
+        CALL WriteByte
+        POP ACC
+        ANL A,#00000001B
+        ORL A,#'0'
+        CALL WriteByte
+        MOV A,#':'
+        CALL WriteByte
+        CALL CPR_DTA_READ
+        POP ACC
+        CALL SendByteHEX
+        RET
+
+        DEFB VG_TRACK_UPDATE
+
+
+;---[COMMANDS]----------------------------------------------------------------
+; Commands Procedures
+;-----------------------------------------------------------------------------
+        INIT_EXEC_TABLE EXEC_VGCMD_PROC
+        ADD_EXEC_TABLE 0000B,VGCMDP0000B
+        ADD_EXEC_TABLE 0001B,VGCMDP0001B
+        ADD_EXEC_TABLE 0010B,VGCMDP001uB
+        ADD_EXEC_TABLE 0011B,VGCMDP001uB
+        ADD_EXEC_TABLE 0100B,VGCMDP010uB
+        ADD_EXEC_TABLE 0101B,VGCMDP010uB
+        ADD_EXEC_TABLE 0110B,VGCMDP011uB
+        ADD_EXEC_TABLE 0111B,VGCMDP011uB
+        ADD_EXEC_TABLE 1000B,VGCMDP100mB
+        ADD_EXEC_TABLE 1001B,VGCMDP100mB
+        ADD_EXEC_TABLE 1010B,VGCMDP101mB
+        ADD_EXEC_TABLE 1011B,VGCMDP101mB
+        ADD_EXEC_TABLE 1100B,VGCMDP1100B
+        ADD_EXEC_TABLE 1101B,VGCMDP1101B
+        ADD_EXEC_TABLE 1110B,VGCMDP1110B
+        ADD_EXEC_TABLE 1111B,VGCMDP1111B
+
+VGCMDP0000B:    ;Restore
+        MOV A,VG_CST
+        CALL EXEC_CMDTYPE_I_PROC.EXEC
+        JB STT.DoStep,VCMP0000x1
+        CLR VGF_DIRC     ;DIRECTION TO TRACK 00
+        CLR VG_TRACK_UPDATE
+        MOV VG_CDS,#127
+        MOV VG_TRK,#127
+        MOV A,#'S'
+        CALL WriteByte
+VCMP0000x1
+        JNB VGF_TR00,VCMP0000x3
+        JNB STT.EndStep,VCMP0000x2
+VCMP0000x3
+        CALL DoCaclTrackStep
+;        MOV A,VG_TRK
+;        CALL CPR_TRK_WRITE
+        CALL CMT_FINISH
+        MOV A,#'E'
+        CALL WriteByte
+VCMP0000x2
+        RET
+
+
+
+VGCMDP0001B:    ;Seek
+        MOV A,VG_CST
+        CALL EXEC_CMDTYPE_I_PROC.EXEC
+        JB STT.DoStep,VCMP0001x1
+        MOV C,VG_CMD.u
+        MOV VG_TRACK_UPDATE,C
+;         MOV A,VG_TRK
+;         CALL SendByteHEX
+;         MOV A,VG_DTA
+;         CALL SendByteHEX
+        CLR C
+        MOV A,VG_TRK
+        SUBB A,VG_DTA
+        MOV VGF_DIRC,C
+        JNC VCMP0001x3
+        CPL A
+        INC A
+VCMP0001x3
+        MOV VG_CDS,A
+;         CALL SendByteHEX
+        MOV A,#'s'
+        CALL WriteByte
+;         MOV C,VG_TRACK_UPDATE
+;         MOV A,#'0'
+;         ADDC A,#0
+;         CALL WriteByte
+;         MOV A,#'s'
+;         CALL WriteByte
+VCMP0001x1
+VCMPDIE:JNB STT.EndStep,VCMP0001x2
+;        SETB CPSYS.DRQ
+
+;        MOV A,#'=';'e'
+;        CALL WriteByte
+;        MOV A,VG_CMD
+;        CALL SendByteBIN
+
+        MOV A,#'e'
+        CALL WriteByte
+;        CALL WriteWaitFlush
+        CALL CMT_FINISH
+VCMP0001x2
+        RET
+
+
+VGCMDP001uB:    ;Step
+        MOV A,VG_CST
+        CALL EXEC_CMDTYPE_I_PROC.EXEC
+        JB STT.DoStep,VCMP0010x1
+VCMP0010x0
+        MOV C,VG_CMD.u
+        MOV VG_TRACK_UPDATE,C
+        MOV VG_CDS,#1
+        MOV A,#'z'
+        CALL WriteByte
+VCMP0010x1
+        JMP VCMPDIE
+
+VGCMDP010uB:    ;Step In
+        MOV A,VG_CST
+        CALL EXEC_CMDTYPE_I_PROC.EXEC
+        JB STT.DoStep,VCMP0100x1
+        SETB VGF_DIRC   ;DIRECTION TO TRACK 76
+        JMP VCMP0010x0
+VCMP0100x1
+        JMP VCMPDIE
+
+VGCMDP011uB:    ;Step Out
+        MOV A,VG_CST
+        CALL EXEC_CMDTYPE_I_PROC.EXEC
+        JB STT.DoStep,VCMP0111x1
+        CLR  VGF_DIRC   ;DIRECTION TO TRACK 00
+        JMP VCMP0010x0
+VCMP0111x1
+        JMP VCMPDIE
+
+
+VGCMDP1100B:    ;Read Address
+        MOV A,VG_CST
+        CALL EXEC_CMDTYPE_II_PROC.EXEC
+        JB STT.DoStep,VCMP1100x1
+        MOV A,#'/'
+        CALL WriteByte
+        SETB VGF_HLD
+        MOV A,#2                ;START READ IDAM
+        CALL PCA_MFM_START
+        SETB MFM_SEND_DRQ_CRC
+VCMP1100x1
+        JNB STT.EndStep,VCMP1100x2
+        MOV A,#'\'
+        CALL WriteByte
+VCMP1100x4
+        CALL CMT_GET_CURRENT_ERRORE
+        JZ VCMP1100x3
+        ;CLR ST.CRCError
+        ;CLR ST.RecNotFound
+        ;CLR ST.NotReady
+        ;SETB ST.LostData
+        CALL CMT_FINISHE
+        MOV A,#'-'
+        CALL WriteByte
+        MOV A,#'\'
+        CALL WriteByte
+        JMP VCMP1100x2
+VCMP1100x3
+        MOV A,#'+'
+        CALL WriteByte
+        MOV A,#'\'
+        CALL WriteByte
+        CALL CMT_FINISH
+VCMP1100x2
+        RET
+
+VGCMDP100mB:    ;Read Sector
+        MOV A,VG_CST
+        CALL EXEC_CMDTYPE_II_PROC.EXEC
+        JB STT.DoStep,VCMP1000x1
+        MOV A,#'/'
+        CALL WriteByte
+        SETB VGF_HLD
+        MOV A,#2                ;START READ IDAM
+        CALL PCA_MFM_START
+        MOV VG_CST,#4
+VCMP1000x1
+        JNB STT.EndStep,VCMP1000x2
+        MOV A,#'\'
+        CALL WriteByte
+;        CLR ST.CRCError
+;        CLR ST.RecNotFound
+;        CLR ST.NotReady
+        CALL CMT_GET_CURRENT_ERROR
+        JZ VCMP1000x3
+        MOV A,#2
+VCMP1000x3
+        ADD A,#'+'
+        CALL WriteByte
+
+        MOV A,#'\'
+        CALL WriteByte
+        CALL CMT_FINISH
+;        JMP VCMP1100x4
+
+VCMP1000x2
+
+        RET
+
+
+VGCMDP101mB:    ;Write Sector
+        MOV A,VG_CST
+        CALL EXEC_CMDTYPE_II_PROC.EXEC
+        JB STT.DoStep,VCMP1010x4
+        MOV A,#'['
+        CALL WriteByte
+        SETB VGF_HLD
+        MOV A,#2                ;START READ IDAM
+        CALL PCA_MFM_START
+        MOV VG_CST,#0CH
+VCMP1010x4
+        JNB STT.EndStep,VCMP1010x2
+        MOV A,#']'
+        CALL WriteByte
+;        CLR ST.CRCError
+;        CLR ST.RecNotFound
+;        CLR ST.NotReady
+        CALL CMT_FINISH
+;        JMP VCMP1100x4
+
+VCMP1010x2
+
+        RET
+
+
+VGCMDP1110B:    ;Read Track
+
+
+;        MOV A,VG_CMD
+;        CALL INTRQ_DATA
+
+        MOV A,#'?'
+        CALL WriteByte
+;MMM
+        CALL CMT_FINISH
+;        JMP MMM
+;        CLR ST.Busy
+;        CALL CPR_STATE_WRITE
+        RET
+
+
+VGCMDP1111B:    ;Write Track
+        MOV A,VG_CMD
+        JNB ACC.3,VCMP1111x1
+;        SETB CPSYS.DRRQ
+;        SETB VGF_HLT
+        MAC_SendSeialString "H"     ;HALT ???
+        CALL CMT_FINISH
+        RET
+VCMP1111x1
+        MOV A,VG_CST
+        CALL EXEC_CMDTYPE_II_PROC.EXEC
+        JB STT.DoStep,VCMP1111x4
+        MOV A,#'W'
+        CALL WriteByte
+        SETB VGF_HLD
+
+        MOV VG_CST,#8
+VCMP1111x4
+        JNB STT.EndStep,VCMP1111x2
+        MOV A,#'w'
+        CALL WriteByte
+;        CLR ST.CRCError
+;        CLR ST.RecNotFound
+;        CLR ST.NotReady
+        CALL CMT_FINISH
+;        JMP VCMP1100x4
+
+VCMP1111x2
+
+;        JB STX.READSTREAM,MMMMO
+;
+;        MOV A,#'W'
+;        CALL WriteByte
+;
+;
+;        CLR STX.INDEX_STRAT
+;        SETB STX.READSTREAM
+;        CLR EX0
+;        SETB CPSYT.DRQ
+;        SETB CPSYS.DRQ
+;        CALL CPR_SYS_WRITE
+;        SETB EX0
+;        MOV STRMCNT+0,#00H
+;        MOV STRMCNT+1,#1BH
+;MMMMO
+
+;        CALL CMT_FINISH
+;        CLR ST.Busy
+;        CALL CPR_STATE_WRITE
+        RET
+
+
+VGCMDP1101B:    ;Force Interrupt
+
+        MOV A,#'I'
+        CALL WriteByte
+;        MOV A,VG_CMD
+;        CALL INTRQ_DATA
+
+;        SETB CPSYS.INTRQ
+;        SETB CPSYS.DRQ
+        CALL CMT_FINISHE
+;        CLR ST.Busy
+;        CALL CPR_STATE_WRITE
+        RET
+
+;-----------------------------------------------------------------------------
+CMT_GET_CURRENT_ERROR:
+        CLR A
+        MOV C,ST.CRCError
+        RLC A
+        MOV C,ST.RecNotFound
+        RLC A
+        MOV C,ST.NotReady
+        RLC A
+        RET
+
+CMT_GET_CURRENT_ERRORE:
+        CLR A
+        CLR C ;MOV C,ST.CRCError
+        RLC A
+        MOV C,ST.RecNotFound
+        RLC A
+        MOV C,ST.NotReady
+        RLC A
+        RET
+
+
+
+;---[COMMANDS TYPE]-----------------------------------------------------------
+; TYPE I
+;-----------------------------------------------------------------------------
+
+
+CMT_CONTINUE:
+        RET
+
+CMT_NEXT:
+        INC VG_CST
+        RET
+
+CMT_FINISH:
+        SETB CPSYS.INTRQ   ;SETB CPSYS.DRQ
+        ;CLR CPSYS.DRQ
+CMT_FINISHE:
+        CLR ST.Busy
+        CALL CPR_STATE_WRITE
+        CALL CPR_SYS_WRITE
+CMT_FINISHX:
+        MOV VG_CST,#0
+        CALL Start_HLD_OFF_SLOW
+        RET
+;A=POS
+CMT_GOTO:
+        MOV VG_CST,A
+        RET
+
+
+;OUT:DPTR = DELAY MCS
+GetHeadStepDelay:
+         MOV A,VG_CMD
+         ANL A,#00000011B
+         MOV DPTR,#3000/2
+         JZ GEHESDx1
+         DEC A
+         MOV DPTR,#6000/2
+         JZ GEHESDx1
+         DEC A
+         MOV DPTR,#10000/2
+         JZ GEHESDx1
+         MOV DPTR,#15000/2
+GEHESDx1 RET
+
+; IN:A  = MAX COMPARATOR
+;OUT:CF = 1 IF A>=VG_CCN
+CMT_COUNTER_INC:
+        INC VG_CCN
+        CLR C
+        SUBB A,VG_CCN
+        RET
+
+
+        INIT_EXEC_TABLE EXEC_CMDTYPE_I_PROC
+        ADD_EXEC_TABLE 00H,CMT1S0
+        ADD_EXEC_TABLE 01H,CMT1S1
+        ADD_EXEC_TABLE 02H,CMT1S2
+        ADD_EXEC_TABLE 03H,CMT1S3
+        ADD_EXEC_TABLE 04H,CMT1S4
+        ADD_EXEC_TABLE 05H,CMT1S5
+        ADD_EXEC_TABLE 06H,CMT1S6
+        ADD_EXEC_TABLE 07H,CMT1S7
+        ADD_EXEC_TABLE 08H,CMT1S8
+        ADD_EXEC_TABLE 09H,CMT1S9
+        ADD_EXEC_TABLE 0AH,CMT1SA
+        ADD_EXEC_TABLE 0BH,CMT1SB
+        ADD_EXEC_TABLE 0CH,CMT1SC
+        ADD_EXEC_TABLE 0DH,CMT1SD
+        ADD_EXEC_TABLE 0EH,CMT1SE
+        ADD_EXEC_TABLE 0FH,CMT1SF
+
+
+
+
+
+CMT1S0: CLR STT.DoStep
+        CLR STT.EndStep
+
+;        CLR CPSYS.DRQ
+;        CALL CPR_SYS_WRITE
+
+        MOV C,VGF_HLD
+        MOV B.0,C
+        MOV C,VG_CMD.h
+        ;SETB C
+        MOV ACC.0,C
+        MOV VGF_HLD,C
+        XRL A,B
+        ANL A,#00000001B
+        PUSH ACC
+        CALL CPR_STATE_WRITE
+        MOV R0,#TMRDEL0
+        POP ACC
+        MOV DPTR,#0
+        JZ CMTSx4
+        INC DPTR
+        ;MOV DPTR,#500
+CMTSx4  CALL WaitMS_Start
+        MOV A,#'Z'
+        CALL WriteByte
+        JMP CMT_NEXT
+
+
+CMT1S1:
+        SETB STT.DoStep
+        ;MOV A,#'X'
+        ;CALL WriteByte
+        MOV R0,#TMRDEL0
+        CALL Wait_Check
+        JNC CMTSx2
+        MOV A,VG_CDS;#127
+        CALL CMT_COUNTER_INC
+        JNC CMTSx1
+        MOV A,#'-'
+        CALL WriteByte
+;         MOV A,VG_CCN
+;         CALL SendByteHEX
+;         MOV A,VG_CDS
+;         CALL SendByteHEX
+;         MOV A,#'-'
+;         CALL WriteByte
+        SETB STT.EndStep
+        JMP CMT_FINISHX
+CMTSx1  MOV A,#'+'
+        CALL WriteByte
+        JMP CMT_NEXT
+
+
+CMT1S2: CALL GetHeadStepDelay
+        MOV R0,#TMRDEL0
+        CALL WaitMCS_Start
+        SETB VGF_STEP
+        JMP CMT_NEXT
+
+CMT1S3: MOV R0,#TMRDEL0
+        CALL Wait_Check
+        JNC CMTSx2
+        CALL GetHeadStepDelay
+        MOV R0,#TMRDEL0
+        CALL WaitMCS_Start
+        CLR VGF_STEP
+        JMP CMT_NEXT
+CMTSx2  JMP CMT_CONTINUE
+
+CMT1S4: MOV R0,#TMRDEL0
+        CALL Wait_Check
+        JNC CMTSx3
+        JNB VG_TRACK_UPDATE,CMTSx5
+        CALL DoCaclTrackStep
+CMTSx5  MOV A,#01H
+        JMP CMT_GOTO
+CMTSx3  JMP CMT_CONTINUE
+
+CMT1S5:
+CMT1S6:
+CMT1S7:
+CMT1S8:
+CMT1S9:
+CMT1SA:
+CMT1SB:
+CMT1SC:
+CMT1SD:
+CMT1SE:
+CMT1SF: JMP CMT_FINISH
+
+DoCaclTrackStep:
+;        MOV A,VG_TRK
+;        CALL SendByteHEX
+        MOV A,#001
+        JB VGF_DIRC,DCTRSx1
+        MOV A,#255
+        JB VGF_TR00,DCTRSx1
+        CLR A
+        MOV VG_TRK,A
+        MOV VG_CDS,A
+DCTRSx1 ADD A,VG_TRK
+        INC A
+        JZ DCTRSx2
+        DEC A
+DCTRSx2 MOV VG_TRK,A
+        CALL CPR_TRK_WRITE
+;         CALL SendByteHEX
+        RET
+
+;---[COMMANDS TYPE]-----------------------------------------------------------
+; TYPE II
+;-----------------------------------------------------------------------------
+
+        DEFD MFMADDR_TRK
+        DEFD MFMADDR_SIDE
+        DEFD MFMADDR_SEC
+        DEFD MFMADDR_LEN
+        ;DEFD MFMADDR_CRCH   GET THIS FROM MFM_DATA_CRC+1
+        ;DEFD MFMADDR_CRCL   GET THIS FROM MFM_DATA_CRC+0
+
+
+
+        INIT_EXEC_TABLE EXEC_CMDTYPE_II_PROC
+        ADD_EXEC_TABLE 00H,CMT2S0
+        ADD_EXEC_TABLE 01H,CMT2S1
+        ADD_EXEC_TABLE 02H,CMT2S2
+        ADD_EXEC_TABLE 03H,CMT2S3
+        ADD_EXEC_TABLE 04H,CMT2S4
+        ADD_EXEC_TABLE 05H,CMT2S5
+        ADD_EXEC_TABLE 06H,CMT2S6
+        ADD_EXEC_TABLE 07H,CMT2S7
+        ADD_EXEC_TABLE 08H,CMT2S8
+        ADD_EXEC_TABLE 09H,CMT2S9
+        ADD_EXEC_TABLE 0AH,CMT2SA
+        ADD_EXEC_TABLE 0BH,CMT2SB
+        ADD_EXEC_TABLE 0CH,CMT2SC
+        ADD_EXEC_TABLE 0DH,CMT2SD
+        ADD_EXEC_TABLE 0EH,CMT2SE
+        ADD_EXEC_TABLE 0FH,CMT2SF
+
+CMT2S0: CLR STT.DoStep
+        CLR STT.EndStep
+        CLR MFM_SEND_DRQ_FINISH
+        CLR MFM_SEND_DRQ_CRC
+        CLR MFM_SEND_DRQ_CRC_CHECKED
+        CLR MFM_DATA_READ_DONE
+        CLR MFM_SEND_DRQ
+CMT2x8  MOV R0,#TMRDEL0
+        MOV DPTR,#1000           ;TIME FOR READ AND TRANFER DATA
+        CALL WaitMS_Start
+        JMP CMT_NEXT
+
+ ;...READ MFM ADDRESS
+CMT2S1: SETB STT.DoStep
+        SETB MFM_SEND_DRQ
+        JMP CMT_NEXT
+
+CMT2S2: JNB MFM_SEND_DRQ,CMT2x3
+        JBC MFM_DATA_READ_DONE,CMT2x1
+
+        MOV R0,#TMRDEL0
+        CALL Wait_Check
+        JNC CMT2x2
+CMT2x4  MOV A,#'%'
+        CALL WriteByte
+        CLR MFM_SEND_DRQ
+        CALL PCA_MFM_STOP
+
+;        SETB ST.CRCError
+        SETB ST.RecNotFound
+;        SETB ST.NotReady
+;        SETB ST.LostData
+
+CMT2x3  SETB STT.EndStep
+        JMP CMT_FINISHX
+CMT2x2  JMP CMT_CONTINUE
+
+CMT2x1  MOV A,#'!'
+        CALL WriteByte
+        CALL PCA_MFM_STOP
+        SETB MFM_SEND_DRQ_FINISH
+        JMP CMT_CONTINUE
+
+
+ ;...READ MFM SECTOR
+CMT2S4: SETB STT.DoStep
+        JBC MFM_DATA_READ_DONE,CMT2x5
+
+        MOV R0,#TMRDEL0
+        CALL Wait_Check
+        JC CMT2x4
+
+        JMP CMT_CONTINUE
+
+CMT2x5  MOV A,#'*'
+        CALL WriteByte
+        CALL EXTRACT_MFM_BUF_ADDR_INFO
+        JNZ CMT2x6
+;        MOV A,MFMADDR_SEC
+;        CALL SendByteHEX
+;        MOV A,MFMADDR_TRK
+;        CALL SendByteHEX
+        MOV A,MFMADDR_TRK
+        XRL A,VG_TRK
+        JZ CMT2x7
+        JMP CMT2x4
+CMT2x7  MOV A,MFMADDR_SEC
+        CJNE A,VG_SEC,CMT2x6
+
+        MOV A,MFMADDR_LEN
+        ADD A,#3
+        CALL PCA_MFM_START
+
+        MOV A,MFMADDR_TRK
+        CALL SendByteHEX
+        MOV A,MFMADDR_SEC
+        CALL SendByteHEX
+        MOV A,MFMADDR_LEN
+        CALL SendByteHEX
+        MOV A,#'*'
+        CALL WriteByte
+
+        CLR A;MOV A,#01H
+        CALL CMT_GOTO
+        JMP CMT2x8
+
+CMT2x6  CALL MFM_BUF_CLEAR
+        JMP CMT_CONTINUE
+
+
+ ;...WRITE MFM TRACK
+CMT2S8: SETB STT.DoStep
+        CLR STX.INDEX_STRAT
+        JMP CMT_NEXT
+
+CMT2S9: ;MOV A,VG_TRK : CALL CREATE_FORMAT_TRACK
+;        MOV A,#'@'
+;        CALL WriteByte
+        CALL EXTRACT_FORMAT_EMUL
+        CALL CMT_NEXT
+
+CMT2SA:
+;        JBC STX.INDEX_STRAT,CMT2x10
+;        JMP CMT_CONTINUE
+;CMT2x10 ;CLR CPSYS.DRQ
+        ;CALL CPR_STATE_WRITE
+
+
+        CALL WAIT_INDEX_START
+;        MOV A,#'@'
+;        CALL WriteByte
+
+
+        ;SETB STX.READSTREAM
+        ;CALL CPR_SYS_WRITE_DRQ  ; NOT NEED FOR EXTRACT_WRITE_FORMAT
+        ;MOV STRMCNT+0,#00H
+        ;MOV STRMCNT+1,#7BH
+        ;JMP CMT_NEXT
+        CALL CMT_NEXT
+
+
+CMT2SB:
+;        MOV A,#'^'
+;        CALL WriteByte
+;4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E
+;4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E
+;4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E
+;4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E
+;4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E
+;4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E
+;4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E
+;4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E
+;4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E
+;4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E
+;4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E
+;4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E
+;4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E
+;4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E
+;4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E
+;4E4E
+
+
+        ;CALL EXTRACT_WRITE_FORMAT ;     ;CALL PoolSTR
+        CALL WRITE_FORMAT_EMUL
+        JMP CMT2x11
+
+
+;CMT2x12 JBC STX.INDEX_STRAT,CMT2x11
+;        JNB CPSYT.DRQ,CMT2x12
+;        MOV A,VG_DTA
+;        CALL SendByteHEX
+;        CALL CPR_SYS_WRITE_DRQ
+;        JMP CMT2x12
+
+
+        JBC STX.INDEX_STRAT,CMT2x11
+        JB STX.READSTREAM,CMT2x9
+CMT2x11 CLR STX.READSTREAM
+        SETB STT.EndStep
+        JMP CMT_FINISHX
+CMT2x9  JMP CMT_CONTINUE
+
+
+ ;...WRITE MFM SECTOR
+CMT2SC: SETB STT.DoStep
+        JMP CMT_NEXT
+
+CMT2SD: ;MOV A,#'!'
+        ;CALL WriteByte
+        ;;;CALL EXTRACT_SECTOR_EMUL
+        JMP CMT_NEXT
+
+CMT2x14 JMP CMT2x4
+CMT2SE: MOV A,VG_SEC
+        CALL MTW9xFIND_SEC ;;;CALL MTW9xWRITE_SEC
+        JC CMT2x17
+        JMP CMT2x14
+CMT2x17 CALL EXTRACT_WRITE_SECTOR
+        SETB STT.EndStep
+        JMP CMT_FINISHX
+
+;;;;;;;;;        ;SETB STT.DoStep
+;;;;;;;;;        JBC MFM_DATA_READ_DONE,CMT2x13
+;;;;;;;;;
+;;;;;;;;;        MOV R0,#TMRDEL0
+;;;;;;;;;        CALL Wait_Check
+;;;;;;;;;        JC CMT2x14
+;;;;;;;;;
+;;;;;;;;;        JMP CMT_CONTINUE
+;;;;;;;;;
+;;;;;;;;;CMT2x13
+;;;;;;;;;        ;MOV A,#'*'
+;;;;;;;;;        ;CALL WriteByte
+;;;;;;;;;        CALL EXTRACT_MFM_BUF_ADDR_INFO
+;;;;;;;;;        JNZ CMT2x16
+;;;;;;;;;;        MOV A,MFMADDR_SEC
+;;;;;;;;;;        CALL SendByteHEX
+;;;;;;;;;;        MOV A,MFMADDR_TRK
+;;;;;;;;;;        CALL SendByteHEX
+;;;;;;;;;        MOV A,MFMADDR_TRK
+;;;;;;;;;        XRL A,VG_TRK
+;;;;;;;;;        JZ CMT2x15
+;;;;;;;;;        JMP CMT2x14
+;;;;;;;;;CMT2x15 MOV A,MFMADDR_SEC
+;;;;;;;;;        CJNE A,VG_SEC,CMT2x16
+;;;;;;;;;
+;;;;;;;;;;        MOV A,MFMADDR_LEN
+;;;;;;;;;;        ADD A,#3
+;;;;;;;;;;        CALL PCA_MFM_START
+;;;;;;;;;
+;;;;;;;;;;        MOV A,MFMADDR_TRK
+;;;;;;;;;;        CALL SendByteHEX
+;;;;;;;;;;        MOV A,MFMADDR_SEC
+;;;;;;;;;;        CALL SendByteHEX
+;;;;;;;;;;        MOV A,MFMADDR_LEN
+;;;;;;;;;;        CALL SendByteHEX
+;;;;;;;;;;        MOV A,#'o'
+;;;;;;;;;;        CALL WriteByte
+;;;;;;;;;
+;;;;;;;;;        CALL PCA_MFM_STOP
+;;;;;;;;;        ;CALL MFM_BUF_CLEAR
+;;;;;;;;;
+;;;;;;;;;        CALL CMT_NEXT
+;;;;;;;;;        JMP CMT2SF
+;;;;;;;;;
+;;;;;;;;;CMT2x16 CALL MFM_BUF_CLEAR
+;;;;;;;;;        JMP CMT_CONTINUE
+;;;;;;;;;
+
+CMT2SF: CALL EXTRACT_WRITE_SECTOR
+        ;;;CALL WRITE_SECTOR_EMUL
+        SETB STT.EndStep
+        JMP CMT_FINISHX
+
+
+
+ ;...
+CMT2S3:
+CMT2S5:
+CMT2S6:
+CMT2S7: JMP CMT_FINISH
+
+;---
+
+EXTRACT_MFM_BUF_ADDR_INFO:
+        CALL MFM_BUF_READ   ;GET TRACK
+        MOV MFMADDR_TRK,A
+        CALL MFM_BUF_READ   ;GET SIDE
+        MOV MFMADDR_SIDE,A
+        CALL MFM_BUF_READ   ;GET SEC
+        MOV MFMADDR_SEC,A
+        CALL MFM_BUF_READ   ;GET LENGTH
+        MOV MFMADDR_LEN,A
+        CLR A
+        RET
+
+        DEFD EXT_LAST_BYTE
+;-----------------------------------------------------------------------------
+;
+;00000901 73A5=73A5
+;00000000000000000000000000000000000000000000000000000000000000000000000000000000
+;00000000000000000000000000000000000000000000000000000000000000000000000000000000
+;00000000000000000000000000000000000000000000000000000000000000000000000000000000
+;00000000000000000000000000000000000000000000000000000000000000000000000000000000
+;00000000000000000000000000000000000000000000000000000000000000000000000000000000
+;0000000000000000000000000000000000000000000000F009009F163E1000100000202020202020
+;20202000004A50484720202020000000 1269=1269
+;
+;00000901 73A5=73A5
+;00000000000000000000000000000000000000000000000000000000000000000000000000000000
+;00000000000000000000000000000000000000000000000000000000000000000000000000000000
+;00000000000000000000000000000000000000000000000000000000000000000000000000000000
+;00000000000000000000000000000000000000000000000000000000000000000000000000000000
+;00000000000000000000000000000000000000000000000000000000000000000000000000000000
+;0000000000000000000000000000000000000000000000F00900011600F009100000000000000000
+;00000000004E414D454C455353000000 B58A=B58A
+;          N A M E L E S S
+;-----------------------------------------------------------------------------
+EXTRACT_WRITE_SECTOR:
+
+       ;CALL WriteWaitFlush
+
+       SETB MCTS
+       CALL PCA_ENMFM_START
+
+;       MOV A,#0AAH
+;       CALL SendByteHEX
+
+
+       MOV R5,#22
+EXSWx5 MOV A,#04EH
+       CALL PCA_ENMFM_ADD_BYTE
+       DJNZ R5,EXSWx5
+
+       MOV R5,#12
+EXSWx2 CLR A;MOV A,#000H
+       CALL PCA_ENMFM_ADD_BYTE
+       DJNZ R5,EXSWx2
+
+       MOV R5,#3
+EXSWx3 INC EOXMFMCNTA1
+       MOV A,#0A1H
+       CALL PCA_ENMFM_ADD_BYTE
+       DJNZ R5,EXSWx3
+
+       MOV A,#0FBH
+       CALL PCA_ENMFM_ADD_BYTE
+       MOV MFM_CCITT_CRC+0,#0B4H ;0CDB4H
+       MOV MFM_CCITT_CRC+1,#0CDH
+       MAC_CRC_CCITT_STEP
+
+       CALL CPR_SYS_WRITE_DRQ_SAFE
+       MOV B,#1
+       MOV R5,#0;255
+EXSWx4 CALL EXTRACT_BYTEX
+       JNC EXSWx1
+       ;MOV A,R5
+       CALL PCA_ENMFM_ADD_BYTE_CHECK_LOST
+       JNC EXSWx8
+       ;MOV EXT_LAST_BYTE,A    ;NEED FOR DETECT SECTOR SIZE
+       MAC_CRC_CCITT_STEP
+       DJNZ R5,EXSWx4
+       DEC B
+       MOV A,B
+       JNZ EXSWx4
+
+;       CALL EXTRACT_BYTEY
+;       JNC EXSWx1
+;       CALL PCA_ENMFM_ADD_BYTE_CHECK_LOST
+;       JNC EXSWx8
+;       MAC_CRC_CCITT_STEP
+
+       MOV A,MFM_CCITT_CRC+1
+       CALL PCA_ENMFM_ADD_BYTE_CHECK_LOST
+       JNC EXSWx8
+       MOV A,MFM_CCITT_CRC+0
+       CALL PCA_ENMFM_ADD_BYTE_CHECK_LOST
+       JNC EXSWx8
+;       MOV A,#04EH
+;       CALL PCA_ENMFM_ADD_BYTE_CHECK_LOST
+;       JNC EXSWx8
+       MOV R5,#20-10
+EXSWx6 MOV A,#04EH
+       CALL PCA_ENMFM_ADD_BYTE_CHECK_LOST
+       JNC EXSWx8
+       DJNZ R5,EXSWx6
+
+
+;       MOV A,#'O'
+;       CALL WriteByte
+
+       JMP EXTWx0
+
+;       CLR CPSYT.DRQ
+;       CLR CPSYS.DRQ
+;       CALL PCA_ENMFM_WAIT_FINISH
+;       CALL PCA_ENMFM_STOP
+;       CLR MCTS
+;       MOV A,#'O'
+;       CALL WriteByte
+;       RET
+
+EXSWx8 JMP EXTWx8
+EXSWx1 JMP EXTWx1
+;-----------------------------------------------------------------------------
+;
+;-----------------------------------------------------------------------------
+WRITE_SECTOR_EMUL:
+
+;        JMP TRFIF_SHOW
+
+        SETB MCTS
+        CALL PCA_ENMFM_START
+
+        MOV R5,#22-6
+WSEEx3  MOV A,#04EH
+        CALL PCA_ENMFM_ADD_BYTE
+        DJNZ R5,WSEEx3
+
+
+        MOV R5,#12
+WSEEx8  MOV A,#000H
+        CALL PCA_ENMFM_ADD_BYTE
+        DJNZ R5,WSEEx8
+
+        CALL CRC_CCITT_START
+        MOV R5,#3
+WSEEx9  INC EOXMFMCNTA1
+        MOV A,#0A1H
+        CALL PCA_ENMFM_ADD_BYTE_CHECK_LOST
+        JNC WSEEx1
+        CALL CRC_CCITT_STEP
+        DJNZ R5,WSEEx9
+
+        MOV A,#0FBH
+        CALL PCA_ENMFM_ADD_BYTE_CHECK_LOST
+        JNC WSEEx1
+        CALL CRC_CCITT_STEP
+
+
+WSEEx2  CALL TRFIF_READ
+        JNC WSEEx7
+        CALL PCA_ENMFM_ADD_BYTE_CHECK_LOST
+        JNC WSEEx1
+        CALL CRC_CCITT_STEP
+        MOV A,B
+        CALL PCA_ENMFM_ADD_BYTE_CHECK_LOST
+        JNC WSEEx1
+        CALL CRC_CCITT_STEP
+        JMP WSEEx2
+
+WSEEx7  MOV A,MFM_CCITT_CRC+1
+        CALL PCA_ENMFM_ADD_BYTE_CHECK_LOST
+        JNC WSEEx1
+        MOV A,MFM_CCITT_CRC+0
+        CALL PCA_ENMFM_ADD_BYTE_CHECK_LOST
+        JNC WSEEx1
+        MOV A,#04EH
+        CALL PCA_ENMFM_ADD_BYTE_CHECK_LOST
+        JNC WSEEx1
+        MOV A,#04EH
+        CALL PCA_ENMFM_ADD_BYTE_CHECK_LOST
+        JNC WSEEx1
+        JMP WSEEx6
+
+WSEEx1  MOV A,#'&'
+        CALL WriteByte
+WSEEx6  CALL PCA_ENMFM_WAIT_FINISH
+        CALL PCA_ENMFM_STOP
+        CLR MCTS
+        RET
+
+;-----------------------------------------------------------------------------
+;F5F5F5FE00000101F7 - ADDR WRITE   A1A1A1FE x4
+;F5F5F5FB........F7 - DATA WRITE   A1A1A1FB x128 x256 x512 x1024
+;F6F6F6FC           - INDEX        C2C2C2FC
+;F7                 - CRCCCITT              x2
+;-----------------------------------------------------------------------------
+
+EXTRACT_SECTOR_EMUL:
+        CALL TRFIF_CLEAR
+        CALL CPR_SYS_WRITE_DRQ_SAFE
+
+        MOV R5,#127
+EXTEx8  CALL EXTRACT_BYTEX
+        JNC EXTEx1
+        MOV B,A
+        CALL EXTRACT_BYTEX
+        JNC EXTEx1
+        XCH A,B
+        CALL TRFIF_WRITE
+        DJNZ R5,EXTEx8
+
+        CALL EXTRACT_BYTEX
+        JNC EXTEx1
+        MOV B,A
+        CALL EXTRACT_BYTEY
+        JNC EXTEx1
+        XCH A,B
+        CALL TRFIF_WRITE
+
+        JMP EXTEx1
+
+;--------------
+
+EXTRACT_FORMAT_EMUL:
+        CALL TRFIF_CLEAR
+        CALL CPR_SYS_WRITE_DRQ_SAFE
+EXTEx22 MOV R5,#0
+EXTEx02 CALL EXTRACT_BYTEXX
+        JNC EXTEx1
+        CJNE A,#04EH,EXTExE
+        DEC R5
+        MOV A,R5
+        JZ EXTEx1
+        JMP EXTEx02
+EXTExE  CJNE A,#0F5H,EXTExB
+        JMP EXTExF5
+EXTExB  CJNE A,#0F6H,EXTExC
+        JMP EXTExF6
+EXTExC  CJNE A,#0F7H,EXTExD
+        JMP EXTExF7
+EXTExD  JMP EXTEx22
+
+EXTEx1  CLR STX.UPDTA
+        CLR CPSYT.DRQ
+        CLR CPSYS.DRQ
+        ;CALL TRFIF_SHOW
+        RET
+
+
+
+EXTExF5:CALL EXTRACT_BYTEXX
+        JNC EXTEx1
+        CJNE A,#0F5H,EXTEx3
+        JMP EXTExF5
+EXTEx3  CJNE A,#0FEH,EXTEx5
+        CLR A ;MOV A,#0FEH
+        CALL TRFIF_WRITE
+        MOV R5,#4
+EXTEx6  CALL EXTRACT_BYTEXX
+        JNC EXTEx1
+        CALL TRFIF_WRITE
+        DJNZ R5,EXTEx6
+        JMP EXTEx22
+EXTEx5  MOV A,#01H
+        CALL TRFIF_WRITE
+        JMP EXTEx22
+
+
+EXTExF6:CALL EXTRACT_BYTEXX
+        JNC EXTEx1
+        CJNE A,#0F6H,EXTEx4
+        JMP EXTExF6
+EXTEx4  ;MOV A,#02H
+        ;CALL TRFIF_WRITE
+        JMP EXTEx22
+
+EXTExF7:;CALL TRFIF_WRITE
+        JMP EXTEx22
+
+;------------------------------------
+;------------------------------------
+;------------------------------------
+;010101010101010101010101010101010101010101010101010101010101010101
+WRITE_FORMAT_EMUL:
+
+;        MOV A,#'|'
+;        CALL WriteByte
+;        CALL TRFIF_SHOW
+;        MOV A,#'|'
+;        CALL WriteByte
+;        RET
+
+        SETB MCTS
+        CALL PCA_ENMFM_START
+
+        MOV R5,#10
+WEFEx3  MOV A,#04EH
+        CALL PCA_ENMFM_ADD_BYTE
+        DJNZ R5,WEFEx3
+
+
+WEFEx2  CALL TRFIF_READ
+        JNC WEFEx7
+        JNZ WEFExMARK_SECTOR
+        JMP WEFExMARK_ADDR
+WEFEx7  MOV R5,#1
+        MOV A,#04EH
+        CALL WEFExSENDxR5
+        JBC STX.INDEX_STRAT,WEFEx8
+        JMP WEFEx7
+WEFEx8  CALL PCA_ENMFM_FLUSH_BUFFERED_DATA
+        JMP WEFEx6
+WEFEx1  MOV A,#'&'
+        CALL WriteByte
+WEFEx6  CALL PCA_ENMFM_WAIT_FINISH
+        CALL PCA_ENMFM_STOP
+        CLR MCTS
+        RET
+
+WEFExSENDxR5xA1:
+        MOV A,EOXMFMCNTA1
+        ADD A,R5
+        MOV EOXMFMCNTA1,A
+        MOV A,#0A1H
+; IN:A=DATA, R5=SIZE ; ERROR SKIP ONE RET !!!
+WEFExSENDxR5:
+        CALL PCA_ENMFM_ADD_BYTE_CHECK_LOST
+        JNC WEFEx5
+        ;PUSH ACC
+        ;CALL SendByteHex
+        ;POP ACC
+        CALL CRC_CCITT_STEP
+        DJNZ R5,WEFExSENDxR5
+        INC R5
+        RET
+WEFEx5  POP ACC
+        POP ACC
+        JMP WEFEx1
+
+
+WEFExMARK_SECTOR:
+        MOV R5,#22
+        MOV A,#04EH
+        CALL WEFExSENDxR5
+        MOV R5,#12
+        MOV A,#000H
+        CALL WEFExSENDxR5
+
+        CALL CRC_CCITT_START
+        MOV R5,#3
+        CALL WEFExSENDxR5xA1
+        MOV A,#0FBH
+        CALL WEFExSENDxR5
+
+        MOV R5,#0
+        MOV A,#000H
+        CALL WEFExSENDxR5
+
+WEFExCR:MOV A,MFM_CCITT_CRC+1
+        CALL PCA_ENMFM_ADD_BYTE_CHECK_LOST
+        JNC WEFEx1
+        MOV A,MFM_CCITT_CRC+0
+        CALL PCA_ENMFM_ADD_BYTE_CHECK_LOST
+        JNC WEFEx1
+
+        JMP WEFEx2
+
+WEFExMARK_ADDR:
+        ;MOV A,#'^'
+        ;CALL WriteByte
+        MOV R5,#50
+        MOV A,#04EH
+        CALL WEFExSENDxR5
+        MOV R5,#12
+        MOV A,#000H
+        CALL WEFExSENDxR5
+
+        CALL CRC_CCITT_START
+        MOV R5,#3
+        CALL WEFExSENDxR5xA1
+        MOV A,#0FEH
+        CALL WEFExSENDxR5
+
+        CALL TRFIF_READ
+        CALL WEFExSENDxR5
+        CALL TRFIF_READ
+        CALL WEFExSENDxR5
+        CALL TRFIF_READ
+        CALL WEFExSENDxR5
+        CALL TRFIF_READ
+        CALL WEFExSENDxR5
+
+        JMP WEFExCR
+
+;------------------------------------
+
+EXTRACT_WRITE_FORMAT:
+
+       CALL WriteWaitFlush
+;;;         CALL PCA_MFM_STOP
+;         CLR EX0
+
+;        JMP MFM_TEST_ENCODER
+
+        ;CALL POSTx3
+
+       SETB MCTS
+       CALL PCA_ENMFM_START
+
+;       MOV A,#0AAH
+;       CALL SendByteHEX
+
+       CALL CPR_SYS_WRITE_DRQ_SAFE
+
+       CALL EXTRACT_BYTE
+       JNC EXTWx1
+       CALL PCA_ENMFM_ADD_BYTE;_CHECK_LOST
+
+EXTWx3 CALL EXTRACT_BYTE
+       JNC EXTWx1
+
+
+;       CALL SendByteHEX
+;       MOV A,R7
+
+       CJNE A,#0F5H,EXTWxB
+;       MOV A,#0A1H
+       JMP EXTWxF5
+EXTWxB CJNE A,#0F6H,EXTWxC
+       MOV A,#0C2H
+       JMP EXTWxE
+EXTWxC CJNE A,#0F7H,EXTWxD
+       MOV A,MFM_CCITT_CRC+1
+       CALL PCA_ENMFM_ADD_BYTE_CHECK_LOST
+       JNC EXTWx8
+       MOV A,MFM_CCITT_CRC+0
+       JMP EXTWxE
+EXTWxD
+
+;       SUBB A,#0F5H-1
+;       JNC EXTWx7
+;       MOV A,R7
+;MAC_CRC_CCITT_STEP
+
+EXTWxE CALL PCA_ENMFM_ADD_BYTE_CHECK_LOST  ;CALL SendByteHEX
+       JC EXTWx3 ;EXTWx8
+
+;       CALL CRC_CCITT_STEP
+
+       JMP EXTWx3
+EXTWx8 MOV A,#'&'
+       CALL WriteByte
+       ;JMP EXTWx1
+       CLR A
+EXTWx1 JNZ EXTWxA
+       CALL PCA_ENMFM_FLUSH_BUFFERED_DATA
+EXTWxA CLR STX.READSTREAM
+EXTWx0:CLR STX.UPDTA
+       CLR CPSYT.DRQ
+       CLR CPSYS.DRQ
+       CALL PCA_ENMFM_WAIT_FINISH
+       CALL PCA_ENMFM_STOP
+       CLR MCTS
+       RET
+
+EXTWxF5:
+       MOV A,#0A1H
+       CALL PCA_ENMFM_ADD_BYTE_CHECK_LOST
+       JNC EXTWx8
+       INC EOXMFMCNTA1
+       CALL EXTRACT_BYTE
+       JNC EXTWx1
+       CJNE A,#0F5H,EXTWxF
+       JMP EXTWxF5
+EXTWxF CALL PCA_ENMFM_ADD_BYTE_CHECK_LOST
+       JNC EXTWx8
+       MOV B,#1
+       MOV R5,#4
+       JNB ACC.0,EXTWxG
+       MOV A,EXT_LAST_BYTE
+       ANL A,#00000011B
+       ADD A,#LOW(EXTWxTBL-EXTWxI)
+       MOVC A,@A+PC
+EXTWxI MOV B,A
+       CLR B.7
+       ANL A,#10000000B
+       MOV R5,A
+;       CALL SendByteHEX
+;       ADD A,B
+;       MOV B,A
+       MOV A,R7
+;       MOV R5,#0
+EXTWxG MOV MFM_CCITT_CRC+0,#0B4H ;0CDB4H
+       MOV MFM_CCITT_CRC+1,#0CDH
+       MAC_CRC_CCITT_STEP
+EXTWxH CALL EXTRACT_BYTE
+       JNC EXTWx1
+       CALL PCA_ENMFM_ADD_BYTE_CHECK_LOST
+       JNC EXTWx8
+       MOV EXT_LAST_BYTE,A    ;NEED FOR DETECT SECTOR SIZE
+       MAC_CRC_CCITT_STEP
+       DJNZ R5,EXTWxH
+       DEC B
+       MOV A,B
+       JNZ EXTWxH
+
+;       MOV A,MFM_CCITT_CRC+1
+;       CALL SendByteHEX
+;       MOV A,MFM_CCITT_CRC+0
+;       CALL SendByteHEX
+
+       JMP EXTWx3
+
+EXTWxTBL DB 81H,01H,02H,04H
+
+
+
+;EXTWx7 MOV A,#0FFH
+;       CALL PCA_ENMFM_ADD_BYTE_CHECK_LOST
+;       JNC EXTWx8
+;       ;ADD A,#'a'
+;       ;CALL WriteByte
+;       JMP EXTWx3
+
+
+
+
+
+;OUT:C=1 IF EXTRACTED
+;    C=0, A=0 INDEX BREAK
+;    C=0, A=1 NO NEW DATA FTOM Z80
+EXTRACT_BYTE:
+       MOV R7,#0
+EXTWx5 ;JNB CPSYT.DRQ,EXTWx4
+       JBC STX.INDEX_STRAT,EXTWx2
+       JBC STX.UPDTA,EXTWx4
+       DJNZ R7,EXTWx5;JMP EXTWx3
+       MOV A,#1
+       JMP EXTWx9
+EXTWx2 CLR A
+EXTWx9 CLR STX.UPDTA
+       CLR C
+       RET
+EXTWx4 PUSH VG_DTA;MOV R7,VG_DTA
+       CALL CPR_SYS_WRITE_DRQ_SAFE ;CALL CPR_SYS_WRITE_DRQ
+       POP ACC;MOV A,R7
+       SETB C
+       RET
+
+EXTRACT_BYTEX:
+       MOV R7,#0
+EXTWxJ ;JNB CPSYT.DRQ,EXTWx4
+       JBC STX.UPDTA,EXTWx4
+       DJNZ R7,EXTWxJ
+       MOV A,#1
+       JMP EXTWx9
+
+
+EXTRACT_BYTEXX:
+       MOV R7,PCACNT
+       INC R7
+       INC R7
+EXTWxM ;JNB CPSYT.DRQ,EXTWx4
+       JBC STX.UPDTA,EXTWx4
+       MOV A,PCACNT
+       XRL A,R7
+       JNZ EXTWxM
+       MOV A,#1
+       JMP EXTWx9
+
+
+EXTRACT_BYTEY:
+       MOV R7,#0
+EXTWxK ;JNB CPSYT.DRQ,EXTWx4
+       JBC STX.UPDTA,EXTWxL
+       DJNZ R7,EXTWxK
+       MOV A,#1
+       JMP EXTWx9
+EXTWxL MOV A,VG_DTA
+       SETB C
+       RET
+
+
+
+
+;-----------------------------------------------------------------------------
+;
+;INTRQ_STROBE:
+;        JMP INTRQ_STROBE0
+;
+;;A=DATA
+;INTRQ_DATA:
+;        PUSH ACC
+;        CLR  CPSYS.INTRQ
+;        CALL CPR_SYS_WRITE
+;        CALL DELWA_0
+;        POP ACC
+;        PUSH R7
+;        MOV R7,#8
+;INRDAx1 CALL INTRQ_STROBE_ACC7
+;        DJNZ R7,INRDAx1
+;        POP R7
+;        RET
+;
+;INTRQ_STROBE0:
+;        PUSH ACC
+;        PUSH PSW
+;        SETB CPSYS.INTRQ
+;        CALL CPR_SYS_WRITE
+;        CALL DELWA_F
+;        CLR  CPSYS.INTRQ
+;        CALL CPR_SYS_WRITE
+;        CALL DELWA_1
+;        POP PSW
+;        POP ACC
+;        RET
+;
+;INTRQ_STROBE1:
+;        PUSH ACC
+;        PUSH PSW
+;        SETB CPSYS.INTRQ
+;        CALL CPR_SYS_WRITE
+;        CALL DELWA_1
+;        CLR  CPSYS.INTRQ
+;        CALL CPR_SYS_WRITE
+;        CALL DELWA_F
+;        POP PSW
+;        POP ACC
+;        RET
+;
+;INTRQ_STROBEF:
+;        PUSH ACC
+;        PUSH PSW
+;        SETB CPSYS.INTRQ
+;        CALL CPR_SYS_WRITE
+;        CLR  CPSYS.INTRQ
+;        CALL CPR_SYS_WRITE
+;        POP PSW
+;        POP ACC
+;        RET
+;
+;
+;INTRQ_STROBE_ACC7:
+;        RLC A
+;INTRQ_STROBECF:
+;        JC INTRQ_STROBE1
+;        JMP INTRQ_STROBE0
+;INTRQ_STROBE_ACC0:
+;        RRC A
+;        JMP INTRQ_STROBECF
+;
+;
+;
+;
+;
+;DELWA_F:PUSH R7
+;        POP R7
+;        RET
+;
+;DELWA_0:PUSH R7
+;        MOV R7,#10
+;        DJNZ R7,$
+;        POP R7
+;        RET
+;
+;DELWA_1:PUSH R7
+;        MOV R7,#20
+;        DJNZ R7,$
+;        POP R7
+;        RET
+;
+
+;---[CRC16]-------------------------------------------------------------------
+; CRC16 CCITT
+;-----------------------------------------------------------------------------
+
+        .MAC_CRC_TBL_START 
+@.0      EQU $
+         ORG $+256
+        ..
+
+        .MAC_CRC_TBL_END 
+@.0.SIZE EQU $-@.0
+        ..
+
+        .MAC_CRC_TBL_GEN ,,,,,,,û
+         ORG $-256
+         DB HIGH(@.0),HIGH(@.1),HIGH(@.2),HIGH(@.3)
+         DB HIGH(@.4),HIGH(@.5),HIGH(@.6),HIGH(@.7)
+         ORG $+256-8
+         DB  LOW(@.0), LOW(@.1), LOW(@.2), LOW(@.3)
+         DB  LOW(@.4), LOW(@.5), LOW(@.6), LOW(@.7)
+        ..
+
+
+   MAC_CRC_TBL_START CRC_TBL_CCITT
+    MAC_CRC_TBL_GEN 00000H,01021H,02042H,03063H,04084H,050A5H,060C6H,070E7H
+    MAC_CRC_TBL_GEN 08108H,09129H,0A14AH,0B16BH,0C18CH,0D1ADH,0E1CEH,0F1EFH
+    MAC_CRC_TBL_GEN 01231H,00210H,03273H,02252H,052B5H,04294H,072F7H,062D6H
+    MAC_CRC_TBL_GEN 09339H,08318H,0B37BH,0A35AH,0D3BDH,0C39CH,0F3FFH,0E3DEH
+    MAC_CRC_TBL_GEN 02462H,03443H,00420H,01401H,064E6H,074C7H,044A4H,05485H
+    MAC_CRC_TBL_GEN 0A56AH,0B54BH,08528H,09509H,0E5EEH,0F5CFH,0C5ACH,0D58DH
+    MAC_CRC_TBL_GEN 03653H,02672H,01611H,00630H,076D7H,066F6H,05695H,046B4H
+    MAC_CRC_TBL_GEN 0B75BH,0A77AH,09719H,08738H,0F7DFH,0E7FEH,0D79DH,0C7BCH
+    MAC_CRC_TBL_GEN 048C4H,058E5H,06886H,078A7H,00840H,01861H,02802H,03823H
+    MAC_CRC_TBL_GEN 0C9CCH,0D9EDH,0E98EH,0F9AFH,08948H,09969H,0A90AH,0B92BH
+    MAC_CRC_TBL_GEN 05AF5H,04AD4H,07AB7H,06A96H,01A71H,00A50H,03A33H,02A12H
+    MAC_CRC_TBL_GEN 0DBFDH,0CBDCH,0FBBFH,0EB9EH,09B79H,08B58H,0BB3BH,0AB1AH
+    MAC_CRC_TBL_GEN 06CA6H,07C87H,04CE4H,05CC5H,02C22H,03C03H,00C60H,01C41H
+    MAC_CRC_TBL_GEN 0EDAEH,0FD8FH,0CDECH,0DDCDH,0AD2AH,0BD0BH,08D68H,09D49H
+    MAC_CRC_TBL_GEN 07E97H,06EB6H,05ED5H,04EF4H,03E13H,02E32H,01E51H,00E70H
+    MAC_CRC_TBL_GEN 0FF9FH,0EFBEH,0DFDDH,0CFFCH,0BF1BH,0AF3AH,09F59H,08F78H
+    MAC_CRC_TBL_GEN 09188H,081A9H,0B1CAH,0A1EBH,0D10CH,0C12DH,0F14EH,0E16FH
+    MAC_CRC_TBL_GEN 01080H,000A1H,030C2H,020E3H,05004H,04025H,07046H,06067H
+    MAC_CRC_TBL_GEN 083B9H,09398H,0A3FBH,0B3DAH,0C33DH,0D31CH,0E37FH,0F35EH
+    MAC_CRC_TBL_GEN 002B1H,01290H,022F3H,032D2H,04235H,05214H,06277H,07256H
+    MAC_CRC_TBL_GEN 0B5EAH,0A5CBH,095A8H,08589H,0F56EH,0E54FH,0D52CH,0C50DH
+    MAC_CRC_TBL_GEN 034E2H,024C3H,014A0H,00481H,07466H,06447H,05424H,04405H
+    MAC_CRC_TBL_GEN 0A7DBH,0B7FAH,08799H,097B8H,0E75FH,0F77EH,0C71DH,0D73CH
+    MAC_CRC_TBL_GEN 026D3H,036F2H,00691H,016B0H,06657H,07676H,04615H,05634H
+    MAC_CRC_TBL_GEN 0D94CH,0C96DH,0F90EH,0E92FH,099C8H,089E9H,0B98AH,0A9ABH
+    MAC_CRC_TBL_GEN 05844H,04865H,07806H,06827H,018C0H,008E1H,03882H,028A3H
+    MAC_CRC_TBL_GEN 0CB7DH,0DB5CH,0EB3FH,0FB1EH,08BF9H,09BD8H,0ABBBH,0BB9AH
+    MAC_CRC_TBL_GEN 04A75H,05A54H,06A37H,07A16H,00AF1H,01AD0H,02AB3H,03A92H
+    MAC_CRC_TBL_GEN 0FD2EH,0ED0FH,0DD6CH,0CD4DH,0BDAAH,0AD8BH,09DE8H,08DC9H
+    MAC_CRC_TBL_GEN 07C26H,06C07H,05C64H,04C45H,03CA2H,02C83H,01CE0H,00CC1H
+    MAC_CRC_TBL_GEN 0EF1FH,0FF3EH,0CF5DH,0DF7CH,0AF9BH,0BFBAH,08FD9H,09FF8H
+    MAC_CRC_TBL_GEN 06E17H,07E36H,04E55H,05E74H,02E93H,03EB2H,00ED1H,01EF0H
+   MAC_CRC_TBL_END CRC_TBL_CCITT
+
+CRC_CCITT_START:
+        MOV MFM_CCITT_CRC+0,#0FFH
+        MOV MFM_CCITT_CRC+1,#0FFH
+        RET
+
+;        T:=(B XOR (CRC SHR 8));
+;        CRC:=CRC_TBL_CCITT[T] XOR (CRC SHL 8);
+;        RESULT:=CRC;
+
+
+; IN:A=BYTE
+;OUT:MFM_CCITT_CRC = CRC16
+CRC_CCITT_STEP:
+        PUSH ACC
+        PUSH DPTR
+        MAC_CRC_CCITT_STEP
+        POP DPTR
+        POP ACC
+        RET
+
+
+
+;---[TABLE]-------------------------------------------------------------------
+; PCA TABLE MFM
+;-----------------------------------------------------------------------------
+
+MFM_PCA_T0_MCS          EQU 4
+MFM_PCA_T1_MCS          EQU 6
+MFM_PCA_T2_MCS          EQU 8
+
+MFM_PCA_TX_MCS0         EQU MFM_PCA_T0_MCS-1
+MFM_PCA_TX_MCS1         EQU MFM_PCA_T1_MCS-1
+MFM_PCA_TX_MCS2         EQU MFM_PCA_T2_MCS-1
+MFM_PCA_TX_MCS3         EQU MFM_PCA_T2_MCS+1
+
+MFM_PCA_MCS             EQU 1000000/SYSCLK_FREQ_PCA
+MFM_PCA_TX_MCS0S        EQU MFM_PCA_TX_MCS0/MFM_PCA_MCS
+MFM_PCA_TX_MCS1S        EQU MFM_PCA_TX_MCS1/MFM_PCA_MCS
+MFM_PCA_TX_MCS2S        EQU MFM_PCA_TX_MCS2/MFM_PCA_MCS
+MFM_PCA_TX_MCS3S        EQU MFM_PCA_TX_MCS3/MFM_PCA_MCS
+
+MFM_PCA_DE_MCST0        EQU MFM_PCA_T0_MCS/MFM_PCA_MCS
+MFM_PCA_DE_MCST1        EQU MFM_PCA_T1_MCS/MFM_PCA_MCS
+MFM_PCA_DE_MCST2        EQU MFM_PCA_T2_MCS/MFM_PCA_MCS
+
+;           EQU SYSCLK_FREQ_PCA
+
+
+;@.0 = SIZE
+;@.1 = VT1
+;@.2 = VT2
+;@.3 = VT3
+;@.4 = VT4
+
+        .MAC_PCA_TBLVAL ,,,,
+         DS @.0             ,@.4;' '
+         ORG @.
+         DS MFM_PCA_TX_MCS3S,@.3;'3'
+         ORG @.
+         DS MFM_PCA_TX_MCS2S,@.2;'2'
+         ORG @.
+         DS MFM_PCA_TX_MCS1S,@.1;'1'
+         ORG @.
+         DS MFM_PCA_TX_MCS0S,@.4;'.'
+         ORG @.+@.0
+        ..
+
+;@.0 = SIZE
+;@.1 = PTR_T1
+;@.2 = PTR_T2
+;@.3 = PTR_T3
+;@.4 = PTR_TERROR
+        .MAC_PCA_TBLGEN ,,,,
+         MAC_PCA_TBLVAL @.0, LOW(@.1), LOW(@.2), LOW(@.3), LOW(@.4)
+         MAC_PCA_TBLVAL @.0,HIGH(@.1),HIGH(@.2),HIGH(@.3),HIGH(@.4)
+        ..
+
+        DEFDB PCA_TEMP
+        DEFD MFM_SYNC
+        DEFD MFM_SYNCDEF
+        DEFD MFM_SYNCBYTE
+        DEFD MFM_SYNCADDR
+        DEFD MFM_ID_CNT
+        DEFD MFM_SIZE.W
+        DEFD MFM_DATA_CRC.W
+        DEFD MFM_SIZEDEF.W
+        DEFB MFM_SYNC_START     ;1-IN SYNC PROCESS
+        DEFB MFM_SYNC_DONE      ;1-IN SYNC PROCESS
+        DEFB MFM_DATA_READ_CRC  ;1-READ CRC
+        DEFB MFM_DATA_READ_DONE ;1-FLAG FINISH READ
+        DEFB MFM_BIT
+        DEFDB MFM_DTA
+
+; IN:A=T1230
+;OUT:IF CF=1, A=DATA
+MFM_DECODE_STEP:
+        JZ MFDEST0
+        CJNE A,#02,MFDESx1
+MFDEST2:;.T2.                   ; '2':BEGIN
+        CLR C                   ;   S:=S+'0';
+        MOV A,MFM_DTA           ;   XAXBIT:=XAXBIT XOR 1;
+        RLC A                   ;   IF XAXBIT=1 THEN BEGIN
+        CPL MFM_BIT             ;    S:=S+'1';
+        JB MFM_BIT,MFDESx3      ;   END;
+        JC MFDESx2              ;  END;
+        MOV MFM_DTA,A
+        RET
+MFDESx3 JNC MFDESx4
+        MOV MFM_DTA,#00000011B
+        RET
+MFDESx4 SETB C
+        RLC A
+        JC MFDESx2
+        MOV MFM_DTA,A
+        RET
+
+MFDESx1 JC MFDEST1
+MFDEST3:;.T3.                   ; '3':BEGIN
+        CLR C                   ;   S:=S+'0';
+        MOV A,MFM_DTA           ;   S:=S+CHAR((XAXBIT AND 1)+48);
+        RLC A                   ; END;
+        JC MFDESx5
+        MOV C,MFM_BIT
+        RLC A
+        JC MFDESx2
+        MOV MFM_DTA,A
+        RET
+MFDESx5 MOV F0,C
+        XCH A,MFM_DTA
+        MOV C,MFM_BIT
+        MOV A,#00000010B
+        MOV ACC.0,C
+        XCH A,MFM_DTA
+        MOV C,F0
+        RET
+
+MFDEST1:;.T1.                   ; '1':BEGIN
+        MOV C,MFM_BIT           ;   S:=S+CHAR((XAXBIT AND 1)+48);
+        MOV A,MFM_DTA           ; END;
+        RLC A
+        JC MFDESx2
+        MOV MFM_DTA,A
+        RET
+
+MFDEST0:;.T0.
+        CLR MFM_BIT
+        CLR C
+MFDESx2 MOV MFM_DTA,#00000001B
+        RET
+
+MFDEST_FIRT_BIT1:
+        MOV MFM_DTA,#00000011B
+        SETB MFM_BIT
+        RET
+
+        ORGALI 256
+MFMPCA_INTPROC_START  EQU $
+;---SAVE Tx IN BYTE
+MFPCT1: MOV A,PCA_TEMP
+        SETB C
+        RLC A
+        CLR  C
+        RLC A
+        JMP MFPT1x2
+MFPCT2: MOV A,PCA_TEMP
+        CLR  C
+        RLC A
+        SETB C
+        RLC A
+        JMP MFPT1x2
+MFPCT3: MOV A,PCA_TEMP
+        SETB C
+        RLC A
+        SETB C
+        RLC A
+        JMP MFPT1x2
+MFPCT0: MOV A,PCA_TEMP
+        CLR  C
+        RLC A
+        CLR  C
+        RLC A
+MFPT1x2:JNC MFPT1x1
+        MOVX @R0,A
+        INC R0
+        MOV A,#00000011B
+MFPT1x1 MOV PCA_TEMP,A
+        JMP PM0_END
+
+
+;---FIND MARKERS SAVE MFM
+;SYNC
+MFSCT1: MOV A,MFM_SYNC
+        JNZ MFST1x1
+        JNB MFM_SYNC_START,MFST1x2
+        CALL MFDEST1    ;T1
+MFST1x3 JNC MFST1x4
+        JB MFM_DATA_READ_CRC,MFST1x8
+        XCH A,MFM_ID_CNT
+        JNZ MFST1x5
+        XCH A,MFM_ID_CNT
+        MOVX @R0,A
+        INC R0
+        ;SETB C
+        MOV A,MFM_SIZE+0
+        SUBB A,#0
+        MOV MFM_SIZE+0,A
+        MOV A,MFM_SIZE+1
+        SUBB A,#0
+        MOV MFM_SIZE+1,A
+        ORL A,MFM_SIZE+0
+        JNZ MFST1x4
+;        MOV A,MFM_SIZE+0
+;        DEC MFM_SIZE+0
+;        JNZ MFST1xA
+;        MOV A,MFM_SIZE+1
+;        DEC MFM_SIZE+1
+;        JNZ MFST1x4
+        SETB MFM_DATA_READ_CRC
+        MOV MFM_DATA_CRC+1,A
+        MOV MFM_DATA_CRC+0,#0FFH
+;;;        JMP PM0_END
+MFST1x4 JMP PM0_END
+MFST1x8 XCH A,MFM_DATA_CRC+0
+        XCH A,MFM_DATA_CRC+1
+        JZ MFST1x4
+MFST1x9 SETB MFM_DATA_READ_DONE    ;0000!0301 9C6E
+        JMP MFSCT0
+MFST1x5 DEC A
+        JZ MFST1x6
+        XCH A,MFM_ID_CNT
+        CJNE A,MFM_SYNCBYTE,MFSCT0 ;#0A1H*0+0C2H,MFSCT0
+        JMP PM0_END
+MFST1x6 XCH A,MFM_ID_CNT
+        CJNE A,MFM_SYNCADDR,MFSCT0 ;#0FEH*0+0FCH,MFSCT0
+        SETB MFM_SYNC_DONE
+        MOV A,MFM_SIZE+0
+        ORL A,MFM_SIZE+1
+        JZ MFST1x9
+        JMP PM0_END
+MFST1x1 DEC MFM_SYNC
+        JMP PM0_END
+MFST1x7 SETB MFM_SYNC_START
+        CALL MFDEST_FIRT_BIT1
+        JMP PM0_END
+
+MFSCT2: MOV A,MFM_SYNC
+        JNZ MFSCT0
+        JNB MFM_SYNC_START,MFST1x7;SETB MFM_SYNC_START;JNB MFM_SYNC_START,MFST1x7
+        CALL MFDEST2    ;T2
+        JMP MFST1x3
+
+MFSCT3: MOV A,MFM_SYNC
+        JNZ MFSCT0
+        JNB MFM_SYNC_START,MFST1x2;SETB MFM_SYNC_START;JNB MFM_SYNC_START,MFST1x7
+        CALL MFDEST3    ;T3
+        JMP MFST1x3
+
+MFSCT00:MOVX @R0,A
+        INC R0
+MFSCT0: MOV MFM_SYNC,MFM_SYNCDEF;#8*10
+MFST1x2 CLR MFM_SYNC_START
+        CLR MFM_SYNC_DONE
+        CLR MFM_DATA_READ_CRC
+        MOV MFM_ID_CNT,#4
+        MOV MFM_SIZE+0,MFM_SIZEDEF+0
+        MOV MFM_SIZE+1,MFM_SIZEDEF+1
+        CALL MFDEST0    ;T0
+        JMP PM0_END
+
+
+
+MFMPCA_INTPROC_SIZE   EQU $-MFMPCA_INTPROC_START
+
+        DB 0FFH,0FFH,0FFH,0FFH
+        ALIGN 16
+MFM_PCA_TBL     EQU $
+        MAC_PCA_TBLVAL 64, MFPCT1,MFPCT2,MFPCT3, MFPCT0
+        MAC_PCA_TBLVAL 64, MFSCT1,MFSCT2,MFSCT3, MFSCT0
+        MAC_PCA_TBLVAL 64, MFSCT1,MFSCT2,MFSCT3, MFSCT0
+        MAC_PCA_TBLVAL 64, MFSCT1,MFSCT2,MFSCT3, MFSCT0
+MFM_PCA_TBL_SIZE EQU $-MFM_PCA_TBL
+        DB 0FFH,0FFH,0FFH,0FFH
+
+;---MFM PCA-------------------------------------------------------------------
+        .MAC_MFM_CFG ,,,
+         MOV MFM_SYNCDEF,#@.0
+         MOV MFM_SIZEDEF+0,#LOW(@.1)
+         MOV MFM_SIZEDEF+1,#HIGH(@.1)
+         MOV MFM_SYNCBYTE,#HIGH(@.2)
+         MOV MFM_SYNCADDR,#LOW(@.2)
+         MOV MFM_CCITT_CRC+0,#LOW(@.3)
+         MOV MFM_CCITT_CRC+1,#HIGH(@.3)
+        ..
+        .MAC_MFM_CFS 
+         MOV MFM_SIZEDEF+0,#LOW(@.0)
+         MOV MFM_SIZEDEF+1,#HIGH(@.0)
+        ..
+
+;
+PCA_MFM_WAIT_READ_START:
+        JNB MFM_SYNC_DONE,$
+        RET
+
+;CF=1 IF DONE
+;PCA_MFM_CHECK_READ_DONE:
+;        MOV C,MFM_DATA_READ_DONE
+;        RET
+
+PCA_MFM_WAIT_READ_DONE:
+        JNB MFM_DATA_READ_DONE,$
+        CLR MFM_DATA_READ_DONE
+        SETB C
+        RET
+
+; IN: A = 0 - OFF
+;         1 - C2C2C2FC = STARTCRC:CC3E SIZE =    1         INDEX (IAM)
+;         2 - A1A1A1FE = STARTCRC:B230 SIZE =    4 + CRC   ID    (IDAM)
+;         3 - A1A1A1FB = STARTCRC:E295 SIZE =  128 + CRC   DATA  (DAM)
+;         4 - A1A1A1FB = STARTCRC:E295 SIZE =  256 + CRC   DATA  (DAM)
+;         5 - A1A1A1FB = STARTCRC:E295 SIZE =  512 + CRC   DATA  (DAM)
+;         6 - A1A1A1FB = STARTCRC:E295 SIZE = 1024 + CRC   DATA  (DAM)
+PCA_MFM_STOP:
+        CLR A
+PCA_MFM_START:
+        PUSH DPTR
+        MOV PCA0CPM0,#00H   ;MOV PCA0CPM0,#01H       ;STOP PCA0 DISABLE
+
+         ;PUSH ACC
+         ;MOV A,#'>'
+         ;CALL WriteByte
+         ;POP ACC
+         ;PUSH ACC
+         ;CALL SendByteHEX
+         ;MOV A,#'<'
+         ;CALL WriteByte
+         ;POP ACC
+         ;MOV MFM_SYNCBYTE,#0AAH
+         ;MOV MFM_SYNCADDR,#055H
+
+        JZ PCMFSx1
+
+;        MOV MFM_SYNCDEF,#8*10
+;        MOV MFM_SIZE,#4
+;        MOV MFM_SYNCBYTE,#0C2H
+;        MOV MFM_SYNCADDR,#0FCH
+
+        MAC_MFM_CFG 8*10,    0, 0C2FCH, 0CC3EH
+        DEC A
+        JZ PCMFSx2
+        MAC_MFM_CFG 8*10,    4, 0A1FEH, 0B230H
+        DEC A
+        JZ PCMFSx2
+        MAC_MFM_CFG 8*10,  128, 0A1FBH, 0E295H
+        DEC A
+        JZ PCMFSx2
+        MAC_MFM_CFS        256
+        DEC A
+        JZ PCMFSx2
+        MAC_MFM_CFS        512
+        DEC A
+        JZ PCMFSx2
+        MAC_MFM_CFS       1024
+        DEC A
+        JZ PCMFSx2
+
+;        JMP PCMFSx1
+PCMFSx1 POP DPTR
+        RET
+
+PCMFSx2 MOV PCA0_MODE,#01000000B;MFM DECODER
+        MOV MFM_SYNC,MFM_SYNCDEF
+        CLR MFM_SYNC_START
+        CLR MFM_SYNC_DONE
+        MOV MFM_ID_CNT,#4
+        MOV MFM_SIZE+0,MFM_SIZEDEF+0
+        MOV MFM_SIZE+1,MFM_SIZEDEF+1
+        CALL MFDEST0    ;T0
+        CALL MFM_BUF_CLEAR
+        CLR MFM_DATA_READ_CRC
+        CLR MFM_DATA_READ_DONE
+        CLR CCF0
+        MOV PCA0CPM0,#11H       ;START PCA0 CAPTURE NEGATIVE EDGE
+        JMP PCMFSx1
+
+;---[MFM]---------------------------------------------------------------------
+; MFM Encoder
+;-----------------------------------------------------------------------------
+
+        DEFB EOXMFMBIT
+        DEFD EOXMFMBYTE
+        DEFD EOXMFMACUM
+        DEFD EOXMFMCNTA1
+        DEFD EOXMFPOOL
+
+
+;A=A1 SYNCHRO COUNTER
+MFM_ENCODE_START:
+        CLR EOXMFMBIT
+        MOV EOXMFMBYTE,#0
+        MOV EOXMFMACUM,#10000000B;8
+        MOV EOXMFMCNTA1,A
+        MOV EOXMFPOOL,#10000000B
+        RET
+
+; IN:A=1,2,3 = POOL DATA
+;OUT:C=1 IF BIT BYTE FLUSHED
+MFM_ENCODE_ADD_POOL:
+        RRC A
+        XCH A,EOXMFPOOL
+        RRC A
+        XCH A,EOXMFPOOL
+        RRC A
+        MOV A,EOXMFPOOL
+        RRC A
+        MOV EOXMFPOOL,A
+        JNC MFENAx1
+        MOVX @R0,A ;CALL MFM_BUF_WRITE
+        INC R0
+        ;SETB C
+        MOV EOXMFPOOL,#10000000B
+MFENAx1 RET
+
+;C = BIT
+MFM_ENCODE_BIT:
+;;;        MOV F0,C
+;;;        CLR A
+;;;        RRC A
+;;;        MOV C,EOXMFMBIT
+;;;        RLC A
+;;;        RLC A
+;;;        ADD A,#LOW(MFEBIxTBL-MFEBIx1)
+;;;        MOVC A,@A+PC;MOV A,#2
+;;;MFEBIx1
+
+        JNB EOXMFMBIT,MFEBIx3
+        JC MFEBIx4
+        MOV A,#4 ;10
+        JMP MFEBIx5
+MFEBIx4 MOV A,#5 ;11
+        JMP MFEBIx5
+MFEBIx3 JC MFEBIx6
+        MOV A,#2 ;00
+        JMP MFEBIx5
+MFEBIx6 MOV A,#1 ;01
+MFEBIx5 ORL A,EOXMFMBYTE
+        MOV EOXMFMBYTE,A
+;;;        MOV C,F0
+        MOV EOXMFMBIT,C
+        CALL MFM_ENCODE_FLUSH
+;        CALL MFM_ENCODE_FLUSH
+;        RET
+MFM_ENCODE_FLUSH:
+        MOV A,EOXMFMBYTE
+        CLR C
+        RLC A
+        MOV EOXMFMBYTE,A
+        JNC MFENFx1
+        MOV A,EOXMFMACUM
+        JB ACC.7,MFENFx2
+        ;ANL A,#00000011B
+        CALL MFM_ENCODE_ADD_POOL
+MFENFx2 MOV EOXMFMACUM,#0
+        RET
+MFENFx1 INC EOXMFMACUM
+        RET
+
+;;;MFEBIxTBL DB 2,1,4,5
+
+
+        .MAC_ENC_BYTEBIT û
+         ;RL A
+         ;MOV R5,A;PUSH ACC
+         ;RRC A
+         MOV C,@.0
+         CALL MFM_ENCODE_BIT
+         ;MOV A,R5;POP ACC
+        ..
+
+;A=BYTE FOR ENCODING TO MFM
+MFM_ENCODE_BYTE:
+        MOV MFM_DTA,A
+        MAC_ENC_BYTEBIT MFM_DTA.7 ;CALL MFENBx0
+        MAC_ENC_BYTEBIT MFM_DTA.6 ;CALL MFENBx0
+        MAC_ENC_BYTEBIT MFM_DTA.5 ;CALL MFENBx0
+        MAC_ENC_BYTEBIT MFM_DTA.4 ;CALL MFENBx0
+        MAC_ENC_BYTEBIT MFM_DTA.3 ;CALL MFENBx0
+        MAC_ENC_BYTEBIT MFM_DTA.2 ;CALL MFENBx0
+        MAC_ENC_BYTEBIT MFM_DTA.1 ;CALL MFENBx0
+        MAC_ENC_BYTEBIT MFM_DTA.0 ;CALL MFENBx0
+        MOV A,MFM_DTA
+        CJNE A,#0A1H,MFENBx1
+        MOV A,EOXMFMCNTA1
+        JZ MFENBx1
+        DEC EOXMFMCNTA1
+        MOV A,EOXMFMBYTE
+        XRL A,#080H
+        MOV EOXMFMBYTE,A
+MFENBx1 RET
+;MFENBx0:RL A
+;        PUSH ACC
+;        RRC A
+;        CALL MFM_ENCODE_BIT
+;        POP ACC
+;        RET
+
+MFM_ENCODE_END:
+
+MFENEx4 MOV A,EOXMFMBYTE
+        JZ MFENEx3
+        CALL MFM_ENCODE_FLUSH
+        JMP MFENEx4
+MFENEx3 MOV A,EOXMFPOOL
+        CJNE A,#10000000B,MFENEx1
+        JMP MFENEx2
+MFENEx1 CLR A
+        CALL MFM_ENCODE_ADD_POOL
+        JNC MFENEx1
+MFENEx2 RET
+
+
+
+;---[TIMERS]------------------------------------------------------------------
+; Timers Interrupts
+;-----------------------------------------------------------------------------
+
+        DEFD SPIPOOL
+        DEFD SPIDATA
+        DEFD SPIDCNT
+
+
+SPINx6  MOV A,SPIDATA
+        JNZ SPINx7
+        SETB MRTS       ;START POOL WRITE
+        MOV SPI0DAT,#00000000B
+        INC A
+        ;MOV SPIDATA,A
+        MOV SPIDCNT,A
+        MOV SPIPOOL,A
+        JMP SPINx2
+SPINx7  CLR MRTS        ;FINISH POOL WRITE
+        CLR ESPI0
+        JMP SPINx2
+
+        ;00 - END
+        ;01 - 0,T
+        ;10 - 0,0,T
+        ;11 - 0,0,0,T
+SPI0INT:PUSH ACC                ;2
+        PUSH PSW                ;2
+        PUSH EMI0CN             ;2
+        MOV PSW,#MPSW_PCA       ;3
+        DS 2              ;CORRECT INTERRUPT DELAY
+        CLR SPIF                ;2
+        MOV A,SPIPOOL           ;2
+        JZ SPINx6               ;2.4
+        DEC A                   ;1
+        JZ SPINx1               ;2.4  ... 18
+        MOV SPIPOOL,A           ;2
+         POP EMI0CN             ;2
+         POP PSW                ;2      ;DS 2                   ;1
+        MOV SPI0DAT,#00000000B  ;   <--23+2
+         POP ACC                ;2
+        ;JMP SPINx2
+         RETI
+SPINx1  MOV EMI0CN,#MPAG_PCA_MFM;3
+        MOV SPI0DAT,#10000000B  ;   <--23+2
+        MOV A,SPIDCNT           ;2
+        DEC A                   ;1
+        JNZ SPINx3
+        MOV A,R0
+        XRL A,R1
+        JZ SPINx4
+        MOVX A,@R1
+        INC R1           ;PCA_MFM_RD
+        MOV SPIDATA,A
+        MOV A,#4
+SPINx3  MOV SPIDCNT,A
+        MOV A,SPIDATA
+        RR A
+        RR A
+        XCH A,SPIDATA
+        ANL A,#00000011B
+        JNZ SPINx5
+        MOV PCA_MFM_RD,PCA_MFM_WR
+        DEC A
+SPINx5  INC A
+SPINx4  MOV SPIPOOL,A
+;;;
+;;;
+
+SPINx2
+
+
+
+;        CLR WCOL
+;        CLR MODF
+;        CLR RXOVRN
+
+
+        POP EMI0CN
+        POP PSW
+        POP ACC
+        RETI
+;C=1 IF WRITE POOL IN PROCESS
+SPI_POOL_BUSY:
+        MOV C,ESPI0
+        RET
+
+SPI_POOL_START:
+        MOV SPIPOOL,#0  ;MOV SPIDCNT,#1
+        MOV SPIDATA,#0
+;        MOV A,#01011101B
+;        MOVX @R0,A
+;        INC R0           ;PCA_MFM_WR
+;        MOV A,#00000001B
+;        MOVX @R0,A
+;        INC R0           ;PCA_MFM_WR
+        SETB SPIF       ;SPI0 GENERATE INTERRUPT
+        SETB ESPI0      ;SPI0 ENABLE INTERRUPT
+
+        RET
+
+;-----------------------------------------------------------
+;-----------------------------------------------------------
+;-----------------------------------------------------------
+
+        .ADD_WORD ,Aû
+         ADD A,@.0+0   ;2
+         MOV @.0+0,A   ;2
+         CLR A         ;1
+         ADDC A,@.0+1  ;2
+         MOV @.0+1,A   ;2
+        ..
+
+
+
+
+
+
+
+
+
+
+
+;        DEFB EOXMFMBIT
+;        DEFD EOXMFMBYTE
+;        DEFD EOXMFMACUM
+;        DEFD EOXMFMCNTA1
+;        DEFD EOXMFPOOL
+;        DEFDB MFM_DTA
+        DEFD MFM_CNT
+;;;        DEFD MFM_BUF
+;;;        DEFB MFM_BUFEMPTY
+        DEFB MFM_TRANSMIT_BUSY
+
+        .MAC_BIT_ENCODE_CF
+         JNB EOXMFMBIT,@MFEBIx3
+         JC @MFEBIx4
+         MOV A,#4 ;10
+         JMP @MFEBIx5
+@MFEBIx4 MOV A,#5 ;11
+         JMP @MFEBIx5
+@MFEBIx3 JC @MFEBIx6
+         MOV A,#2 ;00
+         JMP @MFEBIx5
+@MFEBIx6 MOV A,#1 ;01
+@MFEBIx5 ORL A,EOXMFMBYTE
+         MOV EOXMFMBIT,C
+         CLR C
+         RLC A
+         MOV EOXMFMBYTE,A
+        ..
+
+        .MAC_BIT_ENCODE_BYTE
+         RL A
+         MOV MFM_DTA,A
+         MOV C,EOXMFMBIT
+         MOV ACC.1,C
+         MOV C,ACC.0
+         MOV EOXMFMBIT,C
+         ANL A,#00000011B
+         JNB ACC.1,@M1
+         XRL A,#6
+         JMP @M2
+@M1      JNZ @M2
+         MOV A,#2
+@M2      EQU $
+        ..
+
+
+        DEFD EOXMFM_SAVE_PSW
+        DEFD EOXMFM_SAVE_EMI0CN
+        DEFD EOXMFM_LAST_PCA_STEP
+
+
+PCA_ENMFM_START:
+
+        MOV A,#0FEH        ;STOP PCA OVERFLOW INTERRUP
+        ANL A,PCA0MD
+        MOV PCA0MD,A
+
+        MOV EOXMFM_SAVE_PSW,PSW
+        MOV EOXMFM_SAVE_EMI0CN,EMI0CN
+        MOV PSW,#MPSW_PCA
+        MOV EMI0CN,#MPAG_PCA_MFM
+
+        MOV MFM_CNT,#1
+        MOV EOXMFMBYTE,#0
+        MOV EOXMFMACUM,#080H
+        MOV EOXMFMCNTA1,#0
+        MOV MFM_DTA,#000H
+        CLR EOXMFMBIT
+;;;        SETB MFM_BUFEMPTY
+        CLR MFM_TRANSMIT_BUSY
+        RET
+
+PCA_ENMFM_ACTIVE_TRANSMIT:
+
+        SETB MFM_TRANSMIT_BUSY
+
+;         PUSH PSW
+;         MOV PSW,#MPSW_PCA
+;         PUSH EMI0CN
+;         MOV EMI0CN,#MPAG_PCA_MFM
+        CALL PPOLx4
+;         POP EMI0CN
+;         POP PSW
+
+        MOV EOXMFM_LAST_PCA_STEP,#MFM_PCA_DE_MCST0
+        PUSH IE
+        CLR EA
+        MOV A,PCA0L
+        ADD A,#MFM_PCA_DE_MCST0
+        MOV PCA0CPL4,A
+        CLR A
+        ADDC A,PCA0H
+        MOV PCA0CPH4,A
+        CLR CCF4
+        MOV PCA0CPM4,#049H      ;START PCA4 SOFT TIMER
+        CLR VGF_WD
+        SETB VGF_WG
+
+        POP IE
+
+        RET
+
+;C=1 IF BUSY
+PCA_ENMFM_BUSY:
+;        JNB MFM_BUFEMPTY,PCENBx1
+;        MOV A,EOXMFMBYTE
+;        JNZ PCENBx1
+;        MOV A,MFM_CNT
+;        JNZ PCENBx1
+;        CLR C
+;        RET
+;PCENBx1 SETB C
+        MOV C,MFM_TRANSMIT_BUSY
+        RET
+
+PCA_ENMFM_FLUSH_BUFFERED_DATA:
+        MOV PCA_MFM_RD,PCA_MFM_WR
+
+        RET
+
+
+PCA_ENMFM_WAIT_FINISH:
+        CALL PCA_ENMFM_BUSY
+        JC PCA_ENMFM_WAIT_FINISH
+        MOV PSW,EOXMFM_SAVE_PSW
+        MOV EMI0CN,EOXMFM_SAVE_EMI0CN
+        CLR VGF_WD
+        CLR VGF_WG
+        RET
+
+        .MAC_WAIT_FREE_FIFO
+@M1      CLR C
+         MOV A,R0
+         SUBB A,R1
+         ANL A,#11000000B
+         JNZ @M1
+         ;JB ACC.7,@M1
+        ..
+
+
+PCA_ENMFM_ADD_BYTE:
+        MOV R7,A
+        MAC_WAIT_FREE_FIFO
+        MOV A,R7
+        MOVX @R0,A
+        INC R0          ;PCA_MFM_WR
+;;;        JNB MFM_BUFEMPTY,$
+;;;        MOV MFM_BUF,A
+;;;        CLR MFM_BUFEMPTY
+        JNB MFM_TRANSMIT_BUSY,PCENBx2
+        RET
+PCENBx2 CALL PCA_ENMFM_ACTIVE_TRANSMIT
+        RET
+
+
+
+;OUT:C=1 IF LOST DATA
+PCA_ENMFM_ADD_BYTE_CHECK_LOST:
+        MOV R7,A
+        MAC_WAIT_FREE_FIFO
+        MOV A,R7
+        MOVX @R0,A
+        INC R0          ;PCA_MFM_WR
+;;;        JNB MFM_BUFEMPTY,$
+;;;        MOV MFM_BUF,A
+;;;        CLR MFM_BUFEMPTY
+        JNB MFM_TRANSMIT_BUSY,PCENBx3
+        SETB C
+        RET
+PCENBx3 CLR C
+        RET
+
+
+PCA_ENMFM_STOP:
+        MOV PCA0CPM4,#001H*0      ;STOP PCA4 NONE BUT INT ON
+        MOV MFM_CNT,#1
+        MOV A,#001H        ;START PCA OVERFLOW INTERRUP
+        ORL A,PCA0MD
+        MOV PCA0MD,A
+        RET
+
+;0=2  0
+;1=1  2
+;2=4  1
+;3=5  3
+;;;PPOLx4: MOV A,MFM_CNT
+;;;        JMP PPOLx15
+PPOLx44:CLR VGF_WD
+        ;CLR MRTS
+PPOLx4: MOV A,MFM_CNT
+PPOLx15 JZ PPOLx11
+        DEC A
+        JNZ PPOLx5
+
+        MOV A,MFM_DTA
+        CJNE A,#0A1H,PPOLx10
+        MOV A,EOXMFMCNTA1
+        JZ PPOLx10
+        DEC EOXMFMCNTA1
+        MOV A,EOXMFMBYTE
+        XRL A,#080H
+        MOV EOXMFMBYTE,A
+PPOLx10 MOV A,R0
+        XRL A,R1
+        JNZ PPOLx9
+        ;JNB MFM_BUFEMPTY,PPOLx9
+        MOV MFM_CNT,#0
+PPOLx11 MOV A,EOXMFMBYTE
+        JZ PPOLx12
+        CLR A
+        JMP PPOLx8
+PPOLx12 MOV PCA0CPM4,#001H*0      ;STOP PCA4 NONE BUT INT ON
+        CLR MFM_TRANSMIT_BUSY
+        ;;;SETB MFM_BUFEMPTY
+PPOLx6  CLR C
+        RET;JMP PPOLx6
+PPOLx9  ;;;SETB MFM_BUFEMPTY
+        MOVX A,@R1
+        INC R1           ;PCA_MFM_RD
+        MOV MFM_DTA,A;MFM_BUF
+        MOV A,#8
+PPOLx5  MOV MFM_CNT,A
+        MOV A,MFM_DTA
+         MAC_BIT_ENCODE_BYTE
+PPOLx8  ORL A,EOXMFMBYTE
+        CLR C
+        RLC A
+        JC PPOLx2
+        INC EOXMFMACUM
+        RLC A
+        MOV EOXMFMBYTE,A
+        JC PPOLx3
+        INC EOXMFMACUM
+        JMP PPOLx4
+PPOLx2  RL A  ;BIT7=0 !!!
+        MOV EOXMFMBYTE,A
+        MOV A,#1
+        JMP PPOLx7
+PPOLx3  CLR A
+PPOLx7  XCH A,EOXMFMACUM
+        ;JB ACC.7,PPOLx6;PPOLx4
+        ;<--- GET THE NEXT POOL
+        SETB C
+        RET
+
+;        MOVX @R0,A
+;        INC R0           ;PCA_MFM_WR
+;PPOLx6  ;MOV A,PCA0CPH4
+;        ;ADD A,#1
+;        ;MOV PCA0CPH4,A
+;        RET
+
+
+PCA_EX4 ;SETB MRTS
+        SETB VGF_WD
+        ;MOV SPI0DAT,#10000000B  ;SEND POOL
+;        CLR A
+;        XCH A,EOXMFM_LAST_PCA_STEP
+;        JZ PPOLx13
+;        ADD_WORD PCA0CPL4,A
+;        CLR VGF_WD
+        CALL PPOLx44
+        JNC PPOLx13
+        ;MOVX @R0,A
+        ;INC R0           ;PCA_MFM_WR
+        ADD A,#LOW(PPOLxTBL-PPOLx14)
+        MOVC A,@A+PC
+PPOLx14 MOV EOXMFM_LAST_PCA_STEP,A
+PPOLx13 ADD_WORD PCA0CPL4,A;CLR MRTS
+        ;CLR VGF_WD
+        POP EMI0CN
+        POP PSW
+        POP ACC
+        RETI
+        ;JMP PCA_EXT
+PPOLxTBL DB MFM_PCA_DE_MCST2-0
+         DB MFM_PCA_DE_MCST0+0
+         DB MFM_PCA_DE_MCST1-0
+         DB MFM_PCA_DE_MCST2-0
+
+
+;        MOV A,R0
+;        XRL A,R1
+;        JNZ PPOLx1
+;        ;FINISH POOL
+;        RET
+;PPOLx1
+;        MOV DPTR,#0     ;TBL
+;        MOVX A,@R1
+;        XCH A,R1
+;        PUSH ACC
+;
+;        MOV A,R1
+;        MOVC A,@A+DPTR
+;        ADD_WORD PCA0CPL1,A
+;        INC DPH
+;        MOV A,R1
+;        MOVC A,@A+DPTR
+;        ADD_WORD PCA0CPL2,A
+;        INC DPH
+;        MOV A,R1
+;        MOVC A,@A+DPTR
+;        ADD_WORD PCA0CPL3,A
+;        INC DPH
+;        MOV A,R1
+;        MOVC A,@A+DPTR
+;        ADD_WORD PCA0CPL4,A
+;
+;        POP ACC
+;        MOV R1,A
+;        INC R1           ;PCA_MFM_RD
+;        JMP PCA_EXT
+
+
+;-----------------------------------------------------------
+;-----------------------------------------------------------
+;-----------------------------------------------------------
+
+;PCA_EX4 ;CLR MRTS
+;        MOV A,PCA0CPH4
+;        ADD A,#10
+;        MOV PCA0CPH4,A
+;        MOV A,#10000010B
+;        MOV SPI0DAT,A
+;        MOV SPICNT,#3
+
+        ;CALL SPI_POOL_START
+
+;        MOV A,PCA0CPL4
+;        ADD A,#MFM_PCA_DE_MCST1 ;SYSCLK_FREQ_PCA  ;16
+;        MOV PCA0CPL4,A
+;        MOV A,PCA0CPH4
+;        ADDC A,#0
+;        MOV PCA0CPH4,A
+        ;SETB MRTS
+
+;        JMP PCA_EXT
+
+PCAINT: PUSH ACC
+        PUSH PSW
+        MOV PSW,#MPSW_PCA
+        PUSH EMI0CN
+        MOV EMI0CN,#MPAG_PCA_MFM
+
+        JBC CCF4,PCA_EX4
+
+        PUSH DPTR
+
+        ;CLR MRTS
+        JBC CCF0,PCA_EX0
+PM0_END:; ;   ;
+;        MOV C,MFM_SYNC_START
+        MOV C,MFM_SYNC_DONE
+;        MOV C,MFM_DATA_READ_DONE
+;        MOV MRTS,C
+        ;SETB MRTS
+
+
+;        SETB MRTS
+;PCA_EX0 JNB CCF1,PCA_EX1
+;        CLR CCF1
+;PM1_INT:
+;PCA_EX1 JNB CCF2,PCA_EX2
+;        CLR CCF2
+;PM2_INT:
+;PCA_EX2 JNB CCF3,PCA_EX3
+;        CLR CCF3
+;PM3_INT:
+;PCA_EX3 JNB CCF4,PCA_EX4
+;        CLR CCF4
+;PM4_INT:
+;PCA_EX4
+
+        JBC CF,PCF_INT
+PCA_EXT:POP DPTR
+        POP EMI0CN
+        POP PSW
+        POP ACC
+        RETI
+
+PCF_INT:
+        INC R2R3
+;        INCW PCACNT
+;        CPL VGF_STEP
+        JMP PCA_EXT
+
+
+PCA_EX0:
+        MOV A,PCA0CPL0
+;        MOV R7,A
+        ;CLR C
+        SUBB A,R6;PCA0_LATCH = R6
+        MOV R6,PCA0CPL0
+        ANL A,#00111111B
+        ORL A,R4 ;PCA0_MODE
+        MOV DPTR,#MFM_PCA_TBL
+        MOVC A,@A+DPTR
+        PUSH ACC
+        MOV A,#HIGH(MFMPCA_INTPROC_START)
+        PUSH ACC
+        RET
+
+
+
+
+;---[TIMERS]------------------------------------------------------------------
+; Timers Function
+;-----------------------------------------------------------------------------
+        MAC_WAIT_TIMER_PROCEDURES PCA0L,PCA0H,PCACNT+0,PCACNT+1, SYSCLK_FREQ_PCA
+
+
+
+;---[TIMERS]------------------------------------------------------------------
+; Inits
+;-----------------------------------------------------------------------------
+
+InitPins:
+
+
+        CLR  VGF_HLD    ;MOTOR OFF/ON
+        CLR  VGF_STEP
+        CLR  VGF_DIRC   ;DIRECTION TO TRACK 00
+         CLR  VGF_EARLY
+         CLR  VGF_LATE
+
+;        CLR  VGF_TG43
+        CLR  VGF_WG
+        CLR  VGF_WD     ;????
+
+        RET
+
+InitRegs:
+        MOV CPSYS,#0
+
+        CLR  CPSYS.DRQ
+        SETB CPSYS.INTRQ
+        SETB CPSYS.CPRINT
+
+        CLR  ST.Busy
+        SETB ST.DRQ
+        CLR  ST.LostData
+        CLR  ST.CRCError
+        CLR  ST.RecNotFound
+        CLR  ST.WriteFault
+        CLR  ST.WriteProtect
+        CLR  ST.NotReady
+
+        CLR STT.RecordType
+        ;CLR ST.RecNotFound
+        ;CLR ST.LostData
+
+        CALL InitPins
+
+
+        MOV VG_CST,#0
+        MOV VG_CCN,#0
+        MOV VG_CDS,#0
+        MOV VG_TRK,#0;127
+        MOV VG_SEC,#0
+        MOV VG_DTA,#0
+
+        MOV A,VG_TRK
+        CALL CPR_TRK_WRITE
+        MOV A,VG_SEC
+        CALL CPR_SEC_WRITE
+        MOV A,VG_DTA
+        CALL CPR_DTA_WRITE
+
+
+        CLR STT.DoBreak
+        CLR STT.DoStep
+        CLR STT.EndStep
+
+        CALL CPR_STATE_WRITE
+        CALL CPR_SYS_WRITE
+
+;        MOV DPTR,#0
+;        MOV R0,#TMRDEL0
+;        CALL WaitMCS_Start
+
+
+        CLR STX.UPCMD
+        CLR STX.UPTRK
+        CLR STX.UPSEC
+        CLR STX.UPDTA
+        CLR STX.READSTREAM
+
+        CLR STX.INDEX_STRAT
+        CLR STX.INDEX_UPDATE
+
+        CLR MFM_SEND_DRQ
+
+        RET
+
+
+
+;-----------------------------------------------------------------------------
+; Serial Interface Procedures
+;-----------------------------------------------------------------------------
+
+
+        Lib51SerialProcedures MPSW_SERIAL, MPAG_SERIAL_FIFO_IN, MPAG_SERIAL_FIFO_OUT
+
+
+;-----------------------------------------------------------------------------
+;RETIXXX:RETI
+;        DEFD INT0TMP
+INT0INT:PUSH ACC
+        PUSH PSW
+        MOV PSW,#MPSW_CPR
+        PUSH EMI0CN
+        MOV EMI0CN,#MPAG_CPR_XRAM
+        MOV R0,#CPRMEM_CPSYX
+        MOVX A,@R0
+        ;CALL RETIXXX
+;        ORL A,#00000010B
+;        MOVX @R0,A
+
+        MOV CPSYT,A
+        ;JMP IN0IxWW
+        JB CPSYT.WR,IN0IxW
+        ;READ BUS
+        ;SETB STX.READSTREAM
+
+
+        .MAC_IN0IxE
+         POP EMI0CN
+         POP PSW
+         POP ACC
+         RETI ;RET
+        ..
+
+
+;IN0IxE
+        MAC_IN0IxE
+        ;FINISH INTERRUPT
+
+
+
+IN0IxWW:DEC R0
+        MOVX A,@R0
+
+        DEC EMI0CN
+        MOVX @R1,A
+        MOV A,CPSYT
+        DEC EMI0CN
+        MOVX @R1,A
+        INC R1
+
+;        MOV EMI0CN,#MPAG_CPR_XRAM
+;;        MOV R0,#CPRMEM_VLADTA
+;        MOV A,#0FFH
+;        MOVX @R0,A
+;
+
+        MAC_IN0IxE;JMP IN0IxE
+
+
+;WRITE ...
+IN0IxW: DEC R0
+        MOVX A,@R0
+        JB CPSYT.A0,IN0Ix1
+        JB CPSYT.A1,IN0Ix2
+        ;;;WRITE 00 CMD
+        JB ST.Busy,IN0Ix4
+        MOV VG_CMD,A
+        CLR CPSYS.CPRINT
+        SETB STX.UPCMD
+        MOV A,STSEND
+        SETB ACC.0   ;SETB ST.Busy
+        MOV R0,#CPRMEM_STATUS
+        MOVX @R0,A
+IN0Ix4  MAC_IN0IxE;JMP IN0IxE
+
+IN0Ix1  JB CPSYT.A1,IN0Ix3
+        ;;;WRITE 01 TRK
+        MOV R0,#CPRMEM_TRK
+        MOV VG_TRK,A
+        MOVX @R0,A
+        CLR CPSYS.CPRINT
+        SETB STX.UPTRK
+        MAC_IN0IxE;JMP IN0IxE
+
+IN0Ix2  ;;;WRITE 10 SEC
+        MOV R0,#CPRMEM_SEC
+        MOV VG_SEC,A
+        MOVX @R0,A
+        CLR CPSYS.CPRINT
+        SETB STX.UPSEC
+        MAC_IN0IxE;JMP IN0IxE
+
+IN0Ix3  ;;;WRITE 11 DATA
+        MOV VG_DTA,A
+        CLR CPSYS.CPRINT
+        SETB STX.UPDTA
+        MAC_IN0IxE;JMP IN0IxE
+
+
+;-----------------------------------------------------------------------------
+
+INT1INT:PUSH ACC
+        PUSH PSW
+
+
+        MOV A,IT01CF
+        SETB STX.INDEX_UPDATE
+        MOV C,ACC.7
+        MOV STX.INDEX_VALUE,C
+        JC IN1Ix1
+        SETB STX.INDEX_STRAT
+IN1Ix1  XRL A,#080H
+        MOV IT01CF,A
+
+        POP PSW
+        POP ACC
+        RETI
+
+
+;-----------------------------------------------------------------------------
+InitPages:
+
+        MOV PSW,#MPSW_CPR       ;REGPAGE INT0
+        MOV R0,#CPRMEM_CPSYX
+        MOV R1,#0               ;POINTER FIFO WR   ;CPRMEM_VLADTA
+        MOV R2,#0               ;POINTER FIFO RD   ;CPRMEM_VLADTA
+
+        MOV PCA_MFM_WR,#0
+        MOV PCA_MFM_RD,#0
+        MOV PCACNT+0,#0
+        MOV PCACNT+1,#0
+        MOV PCA_TEMP,#00000011B
+        MOV PCA0_MODE,#01000000B;MFM DECODER
+
+        MOV PSW,#MPSW_WORK
+        MOV EMI0CN,#MPAG_CPR_XRAM
+
+
+        CALL PCA_MFM_STOP
+
+
+        ;MOV DPTR,#MPAG_CPR_FIFO_BUS*256
+
+
+        RET
+
+
+SPMAX   EQU DSEG$-1
+
+        SaveHEX    "%$ASAM.Compile.FileName%.hex",0,$,32
+        SaveBIN    "%$ASAM.Compile.FileName%.bin",0,$
+        SaveLabels "%$ASAM.Compile.FileName%.txt"
+
+
+
+

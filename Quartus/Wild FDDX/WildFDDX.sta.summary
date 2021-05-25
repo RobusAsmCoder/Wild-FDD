@@ -1,0 +1,21 @@
+------------------------------------------------------------
+TimeQuest Timing Analyzer Summary
+------------------------------------------------------------
+
+Type  : Recovery 'VGCS'
+Slack : -6.600
+TNS   : -71.100
+
+Type  : Removal 'VGCS'
+Slack : -4.100
+TNS   : -4.100
+
+Type  : Minimum Pulse Width 'VGCS'
+Slack : -10.500
+TNS   : -112.000
+
+Type  : Minimum Pulse Width 'CPALE'
+Slack : -3.500
+TNS   : -21.000
+
+------------------------------------------------------------

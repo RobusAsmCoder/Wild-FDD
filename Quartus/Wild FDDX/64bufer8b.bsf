@@ -1,0 +1,155 @@
+/*
+WARNING: Do NOT edit the input and output ports in this file in a text
+editor if you plan to continue editing the block that represents it in
+the Block Editor! File corruption is VERY likely to occur.
+*/
+/*
+Copyright (C) 1991-2009 Altera Corporation
+Your use of Altera Corporation's design tools, logic functions 
+and other software and tools, and its AMPP partner logic 
+functions, and any output files from any of the foregoing 
+(including device programming or simulation files), and any 
+associated documentation or information are expressly subject 
+to the terms and conditions of the Altera Program License 
+Subscription Agreement, Altera MegaCore Function License 
+Agreement, or other applicable license agreement, including, 
+without limitation, that your use is for the sole purpose of 
+programming logic devices manufactured by Altera and sold by 
+Altera or its authorized distributors.  Please refer to the 
+applicable agreement for further details.
+*/
+(header "symbol" (version "1.1"))
+(symbol
+	(rect 64 64 184 368)
+	(text "64bufer8b" (rect 5 0 64 14)(font "Arial" (font_size 8)))
+	(text "inst" (rect 8 288 25 300)(font "Arial" ))
+	(port
+		(pt 120 32)
+		(input)
+		(text "EN" (rect 0 0 15 14)(font "Arial" (font_size 8)))
+		(text "EN" (rect 81 24 96 38)(font "Arial" (font_size 8)))
+		(line (pt 104 32)(pt 120 32)(line_width 1))
+	)
+	(port
+		(pt 0 32)
+		(input)
+		(text "ENA" (rect 0 0 24 14)(font "Arial" (font_size 8)))
+		(text "ENA" (rect 21 24 45 38)(font "Arial" (font_size 8)))
+		(line (pt 0 32)(pt 16 32)(line_width 1))
+	)
+	(port
+		(pt 0 48)
+		(input)
+		(text "ENB" (rect 0 0 23 14)(font "Arial" (font_size 8)))
+		(text "ENB" (rect 21 40 44 54)(font "Arial" (font_size 8)))
+		(line (pt 0 48)(pt 16 48)(line_width 1))
+	)
+	(port
+		(pt 0 64)
+		(input)
+		(text "ENC" (rect 0 0 23 14)(font "Arial" (font_size 8)))
+		(text "ENC" (rect 21 56 44 70)(font "Arial" (font_size 8)))
+		(line (pt 0 64)(pt 16 64)(line_width 1))
+	)
+	(port
+		(pt 0 80)
+		(input)
+		(text "END" (rect 0 0 23 14)(font "Arial" (font_size 8)))
+		(text "END" (rect 21 72 44 86)(font "Arial" (font_size 8)))
+		(line (pt 0 80)(pt 16 80)(line_width 1))
+	)
+	(port
+		(pt 0 96)
+		(input)
+		(text "ENE" (rect 0 0 22 14)(font "Arial" (font_size 8)))
+		(text "ENE" (rect 21 88 43 102)(font "Arial" (font_size 8)))
+		(line (pt 0 96)(pt 16 96)(line_width 1))
+	)
+	(port
+		(pt 0 112)
+		(input)
+		(text "ENF" (rect 0 0 22 14)(font "Arial" (font_size 8)))
+		(text "ENF" (rect 21 104 43 118)(font "Arial" (font_size 8)))
+		(line (pt 0 112)(pt 16 112)(line_width 1))
+	)
+	(port
+		(pt 0 128)
+		(input)
+		(text "ENG" (rect 0 0 24 14)(font "Arial" (font_size 8)))
+		(text "ENG" (rect 21 120 45 134)(font "Arial" (font_size 8)))
+		(line (pt 0 128)(pt 16 128)(line_width 1))
+	)
+	(port
+		(pt 0 144)
+		(input)
+		(text "ENH" (rect 0 0 23 14)(font "Arial" (font_size 8)))
+		(text "ENH" (rect 21 136 44 150)(font "Arial" (font_size 8)))
+		(line (pt 0 144)(pt 16 144)(line_width 1))
+	)
+	(port
+		(pt 0 160)
+		(input)
+		(text "DA[7..0]" (rect 0 0 46 14)(font "Arial" (font_size 8)))
+		(text "DA[7..0]" (rect 21 152 67 166)(font "Arial" (font_size 8)))
+		(line (pt 0 160)(pt 16 160)(line_width 3))
+	)
+	(port
+		(pt 0 176)
+		(input)
+		(text "DB[7..0]" (rect 0 0 44 14)(font "Arial" (font_size 8)))
+		(text "DB[7..0]" (rect 21 168 65 182)(font "Arial" (font_size 8)))
+		(line (pt 0 176)(pt 16 176)(line_width 3))
+	)
+	(port
+		(pt 0 192)
+		(input)
+		(text "DC[7..0]" (rect 0 0 44 14)(font "Arial" (font_size 8)))
+		(text "DC[7..0]" (rect 21 184 65 198)(font "Arial" (font_size 8)))
+		(line (pt 0 192)(pt 16 192)(line_width 3))
+	)
+	(port
+		(pt 0 208)
+		(input)
+		(text "DD[7..0]" (rect 0 0 44 14)(font "Arial" (font_size 8)))
+		(text "DD[7..0]" (rect 21 200 65 214)(font "Arial" (font_size 8)))
+		(line (pt 0 208)(pt 16 208)(line_width 3))
+	)
+	(port
+		(pt 0 224)
+		(input)
+		(text "DE[7..0]" (rect 0 0 43 14)(font "Arial" (font_size 8)))
+		(text "DE[7..0]" (rect 21 216 64 230)(font "Arial" (font_size 8)))
+		(line (pt 0 224)(pt 16 224)(line_width 3))
+	)
+	(port
+		(pt 0 240)
+		(input)
+		(text "DF[7..0]" (rect 0 0 43 14)(font "Arial" (font_size 8)))
+		(text "DF[7..0]" (rect 21 232 64 246)(font "Arial" (font_size 8)))
+		(line (pt 0 240)(pt 16 240)(line_width 3))
+	)
+	(port
+		(pt 0 256)
+		(input)
+		(text "DG[7..0]" (rect 0 0 46 14)(font "Arial" (font_size 8)))
+		(text "DG[7..0]" (rect 21 248 67 262)(font "Arial" (font_size 8)))
+		(line (pt 0 256)(pt 16 256)(line_width 3))
+	)
+	(port
+		(pt 0 272)
+		(input)
+		(text "DH[7..0]" (rect 0 0 44 14)(font "Arial" (font_size 8)))
+		(text "DH[7..0]" (rect 21 264 65 278)(font "Arial" (font_size 8)))
+		(line (pt 0 272)(pt 16 272)(line_width 3))
+	)
+	(port
+		(pt 120 48)
+		(output)
+		(text "LD[7..0]" (rect 0 0 43 14)(font "Arial" (font_size 8)))
+		(text "LD[7..0]" (rect 61 43 104 57)(font "Arial" (font_size 8)))
+		(line (pt 120 48)(pt 104 48)(line_width 1))
+	)
+	(drawing
+		(rectangle (rect 16 16 104 288)(line_width 1))
+	)
+)
